@@ -2,7 +2,7 @@ services:
   app:
     build: .
     ports:
-      - "6010:6010"
+      - "6020:6020"
     container_name: vault-app
     depends_on:
       - db
