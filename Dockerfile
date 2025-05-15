@@ -10,7 +10,7 @@ RUN ./mvnw dependency:go-offline
 
 COPY src ./src
 
-ENV PORT=6010
-EXPOSE 6010
+ENV PORT=6020
+EXPOSE 6020
 
 CMD ["./mvnw", "spring-boot:run"]
