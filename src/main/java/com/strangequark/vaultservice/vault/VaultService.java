@@ -1,12 +1,14 @@
 package com.strangequark.vaultservice.vault;
 
 import com.strangequark.vaultservice.environment.Environment;
+import com.strangequark.vaultservice.error.ErrorResponse;
 import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -20,90 +22,153 @@ public class VaultService {
     @Autowired
     private VariableRepository variableRepository;
 
-    public Service createService(String serviceName) {
-        Service service = new Service();
-        service.setName(serviceName);
-        Service savedService = serviceRepository.save(service);
+    public ResponseEntity<?> createService(String serviceName) {
+        try {
+            Service service = new Service();
+            service.setName(serviceName);
+            Service savedService = serviceRepository.save(service);
 
-        // Add default environments
-        createEnvironment(serviceName, "e1");
-        createEnvironment(serviceName, "e2");
-        createEnvironment(serviceName, "e3");
+            // Add default environments
+            createEnvironment(serviceName, "e1");
+            createEnvironment(serviceName, "e2");
+            createEnvironment(serviceName, "e3");
 
-        return savedService;
+            return ResponseEntity.ok(savedService);
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Service creation failed"));
+        }
     }
 
-    public Environment createEnvironment(String serviceName, String environmentName) {
-        Service service = serviceRepository.findByName(serviceName);
-        if (service == null) throw new RuntimeException("Service not found");
+    public ResponseEntity<?> createEnvironment(String serviceName, String environmentName) {
+        try {
+            Service service = serviceRepository.findByName(serviceName);
+            if (service == null) throw new RuntimeException("Service not found");
 
-        Environment environment = new Environment();
-        environment.setName(environmentName);
-        environment.setService(service);
-        return environmentRepository.save(environment);
+            Environment environment = new Environment();
+            environment.setName(environmentName);
+            environment.setService(service);
+            environmentRepository.save(environment);
+
+            return ResponseEntity.ok(environment);
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Environment creation failed"));
+        }
     }
 
-    public List<Variable> getVariablesByService(String serviceName) {
-        Service service = serviceRepository.findByName(serviceName);
-        if (service == null) throw new RuntimeException("Service not found");
-        return variableRepository.findByEnvironmentServiceId(service.getId());
+    public ResponseEntity<?> getVariablesByService(String serviceName) {
+        try {
+            Service service = serviceRepository.findByName(serviceName);
+            if (service == null) throw new RuntimeException("Service not found");
+            List<Variable> variables = variableRepository.findByEnvironmentServiceId(service.getId());
+
+            return ResponseEntity.ok(variables);
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variables for " + serviceName));
+        }
+
     }
 
-    public List<Variable> getVariablesByEnvironment(String serviceName, String environmentName) {
-        Service service = serviceRepository.findByName(serviceName);
-        if (service == null) throw new RuntimeException("Service not found");
+    public ResponseEntity<?> getVariablesByEnvironment(String serviceName, String environmentName) {
+        try {
+            Service service = serviceRepository.findByName(serviceName);
+            if (service == null) throw new RuntimeException("Service not found");
 
-        Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
-        if (environment == null) throw new RuntimeException("Environment not found");
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
+            if (environment == null) throw new RuntimeException("Environment not found");
 
-        return variableRepository.findByEnvironmentId(environment.getId());
+            List<Variable> variables = variableRepository.findByEnvironmentId(environment.getId());
+
+            return ResponseEntity.ok(variables);
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variables for " +
+                    environmentName + " of " + serviceName + " service"));
+        }
     }
 
-    public Variable getVariableByName(String serviceName, String environmentName, String variableName) {
-        Service service = serviceRepository.findByName(serviceName);
-        if (service == null) throw new RuntimeException("Service not found");
+    public ResponseEntity<?> getVariableByName(String serviceName, String environmentName, String variableName) {
+        try {
+            Service service = serviceRepository.findByName(serviceName);
+            if (service == null) throw new RuntimeException("Service not found");
 
-        Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
-        if (environment == null) throw new RuntimeException("Environment not found");
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
+            if (environment == null) throw new RuntimeException("Environment not found");
 
-        return variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
-                .orElseThrow(() -> new RuntimeException("Variable not found"));
+            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
+                    .orElseThrow(() -> new RuntimeException("Variable not found"));
+
+            return ResponseEntity.ok(variable);
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variable " + variableName));
+        }
     }
 
-    public Variable getVariable(Long id) {
-        return variableRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Variable not found"));
+    public ResponseEntity<?> addVariable(String serviceName, String environmentName, Variable variable) {
+        try {
+            Service service = serviceRepository.findByName(serviceName);
+            if (service == null) throw new RuntimeException("Service not found");
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
+            if (environment == null) throw new RuntimeException("Environment not found");
+
+            variable.setEnvironment(environment);
+            variableRepository.save(variable);
+
+            return ResponseEntity.ok("Variable successfully added");
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to add variable"));
+        }
     }
 
-    public Variable addVariable(String serviceName, String environmentName, Variable variable) {
-        Service service = serviceRepository.findByName(serviceName);
-        if (service == null) throw new RuntimeException("Service not found");
+    public ResponseEntity<?> deleteVariable(Long id) {
+        try {
+            variableRepository.deleteById(id);
 
-        Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
-        if (environment == null) throw new RuntimeException("Environment not found");
-
-        variable.setEnvironment(environment);
-        return variableRepository.save(variable);
+            return ResponseEntity.ok("Variable successfully deleted");
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete variable"));
+        }
     }
 
-    public void deleteVariable(Long id) {
-        variableRepository.deleteById(id);
+    public ResponseEntity<?> deleteEnvironment(String serviceName, String environmentName) {
+        try {
+            Service service = serviceRepository.findByName(serviceName);
+            if (service == null) throw new RuntimeException("Service not found");
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
+            if (environment == null) throw new RuntimeException("Environment not found");
+
+            environmentRepository.delete(environment);
+
+            return ResponseEntity.ok("Environment successfully deleted");
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete environment"));
+        }
     }
 
-    public void deleteEnvironment(String serviceName, String environmentName) {
-        Service service = serviceRepository.findByName(serviceName);
-        if (service == null) throw new RuntimeException("Service not found");
+    public ResponseEntity<?> deleteService(String serviceName) {
+        try {
+            Service service = serviceRepository.findByName(serviceName);
+            if (service == null) throw new RuntimeException("Service not found");
 
-        Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
-        if (environment == null) throw new RuntimeException("Environment not found");
+            serviceRepository.delete(service);
 
-        environmentRepository.delete(environment);
-    }
-
-    public void deleteService(String serviceName) {
-        Service service = serviceRepository.findByName(serviceName);
-        if (service == null) throw new RuntimeException("Service not found");
-
-        serviceRepository.delete(service);
+            return ResponseEntity.ok("Service successfully deleted");
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete service"));
+        }
     }
 }
