@@ -7,6 +7,7 @@ import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
+import com.strangequark.vaultservice.variable.VariableResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
@@ -41,7 +42,7 @@ public class VaultService {
 
     public ResponseEntity<?> createEnvironment(String serviceName, String environmentName) {
         try {
-            Service service = serviceRepository.findServiceByName(serviceName);
+            Service service = serviceRepository.findByName(serviceName);
             if (service == null) throw new RuntimeException("Service not found");
 
             Environment environment = new Environment();
@@ -59,9 +60,9 @@ public class VaultService {
 
     public ResponseEntity<?> getVariablesByService(String serviceName) {
         try {
-            Service service = serviceRepository.findServiceByName(serviceName);
+            Service service = serviceRepository.findByName(serviceName);
             if (service == null) throw new RuntimeException("Service not found");
-            List<Variable> variables = variableRepository.findVariablesByServiceId(service.getId());
+            List<Variable> variables = variableRepository.findByEnvironmentServiceId(service.getId());
 
             return ResponseEntity.ok(variables);
         } catch (RuntimeException runtimeException) {
@@ -74,13 +75,13 @@ public class VaultService {
 
     public ResponseEntity<?> getVariablesByEnvironment(String serviceName, String environmentName) {
         try {
-            Service service = serviceRepository.findServiceByName(serviceName);
+            Service service = serviceRepository.findByName(serviceName);
             if (service == null) throw new RuntimeException("Service not found");
 
-            Environment environment = environmentRepository.findEnvironmentByNameAndServiceId(environmentName, service.getId());
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
             if (environment == null) throw new RuntimeException("Environment not found");
 
-            List<Variable> variables = variableRepository.findVariablesByEnvironmentId(environment.getId());
+            List<Variable> variables = variableRepository.findByEnvironmentId(environment.getId());
 
             return ResponseEntity.ok(variables);
         } catch (RuntimeException runtimeException) {
@@ -93,16 +94,16 @@ public class VaultService {
 
     public ResponseEntity<?> getVariableByName(String serviceName, String environmentName, String variableName) {
         try {
-            Service service = serviceRepository.findServiceByName(serviceName);
+            Service service = serviceRepository.findByName(serviceName);
             if (service == null) throw new RuntimeException("Service not found");
 
-            Environment environment = environmentRepository.findEnvironmentByNameAndServiceId(environmentName, service.getId());
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
             if (environment == null) throw new RuntimeException("Environment not found");
 
-            Variable variable = variableRepository.findVariableByEnvironmentIdAndKey(environment.getId(), variableName)
+            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
-            return ResponseEntity.ok(variable);
+            return ResponseEntity.ok(new VariableResponse(variable));
         } catch (RuntimeException runtimeException) {
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
@@ -112,10 +113,10 @@ public class VaultService {
 
     public ResponseEntity<?> addVariable(String serviceName, String environmentName, Variable variable) {
         try {
-            Service service = serviceRepository.findServiceByName(serviceName);
+            Service service = serviceRepository.findByName(serviceName);
             if (service == null) throw new RuntimeException("Service not found");
 
-            Environment environment = environmentRepository.findEnvironmentByNameAndServiceId(environmentName, service.getId());
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
             if (environment == null) throw new RuntimeException("Environment not found");
 
             variable.setEnvironment(environment);
@@ -141,10 +142,10 @@ public class VaultService {
 
     public ResponseEntity<?> deleteEnvironment(String serviceName, String environmentName) {
         try {
-            Service service = serviceRepository.findServiceByName(serviceName);
+            Service service = serviceRepository.findByName(serviceName);
             if (service == null) throw new RuntimeException("Service not found");
 
-            Environment environment = environmentRepository.findEnvironmentByNameAndServiceId(environmentName, service.getId());
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
             if (environment == null) throw new RuntimeException("Environment not found");
 
             environmentRepository.delete(environment);
@@ -159,7 +160,7 @@ public class VaultService {
 
     public ResponseEntity<?> deleteService(String serviceName) {
         try {
-            Service service = serviceRepository.findServiceByName(serviceName);
+            Service service = serviceRepository.findByName(serviceName);
             if (service == null) throw new RuntimeException("Service not found");
 
             serviceRepository.delete(service);
