@@ -3,6 +3,7 @@ package com.strangequark.vaultservice.vault;
 import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.error.ErrorResponse;
 import com.strangequark.vaultservice.service.Service;
+import com.strangequark.vaultservice.utility.EncryptionUtility;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
@@ -22,6 +23,8 @@ public class VaultService {
     private EnvironmentRepository environmentRepository;
     @Autowired
     private VariableRepository variableRepository;
+    @Autowired
+    private EncryptionUtility encryptionUtility;
 
     public ResponseEntity<?> createService(String serviceName) {
         try {
@@ -64,7 +67,7 @@ public class VaultService {
             if (service == null) throw new RuntimeException("Service not found");
             List<Variable> variables = variableRepository.findByEnvironmentServiceId(service.getId());
 
-            return ResponseEntity.ok(variables);
+            return ResponseEntity.ok(encryptionUtility.decryptList(variables));
         } catch (RuntimeException runtimeException) {
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
@@ -83,7 +86,7 @@ public class VaultService {
 
             List<Variable> variables = variableRepository.findByEnvironmentId(environment.getId());
 
-            return ResponseEntity.ok(variables);
+            return ResponseEntity.ok(encryptionUtility.decryptList(variables));
         } catch (RuntimeException runtimeException) {
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
@@ -100,8 +103,12 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
             if (environment == null) throw new RuntimeException("Environment not found");
 
-            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
+            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), encryptionUtility.encrypt(variableName))
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
+
+            //Decrypt the variables key/value pair
+            variable.setKey(encryptionUtility.decrypt(variable.getKey()));
+            variable.setValue(encryptionUtility.decrypt(variable.getValue()));
 
             return ResponseEntity.ok(new VariableResponse(variable));
         } catch (RuntimeException runtimeException) {
@@ -120,6 +127,11 @@ public class VaultService {
             if (environment == null) throw new RuntimeException("Environment not found");
 
             variable.setEnvironment(environment);
+
+            //Encrypt the variables key/value pair
+            variable.setKey(encryptionUtility.encrypt(variable.getKey()));
+            variable.setValue(encryptionUtility.encrypt(variable.getValue()));
+
             variableRepository.save(variable);
 
             return ResponseEntity.ok("Variable successfully added");
