@@ -1,31 +1,51 @@
 package com.strangequark.vaultservice.utility;
 
+import com.strangequark.vaultservice.variable.Variable;
+import org.springframework.stereotype.Component;
+
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
+@Component
 public class EncryptionUtility {
 
-    private static final String ALGORITHM = "AES";
+    private final String ALGORITHM = "AES";
 
-    // Encrypt a given plaintext using AES and the secret key
-    public static String encrypt(String plainText, String secretKey) throws Exception {
-        SecretKey key = new SecretKeySpec(secretKey.getBytes(), ALGORITHM);
+    private final String ENCRYPTION_KEY = System.getenv("ENCRYPTION_KEY");
+
+    public String encrypt(String plainText) throws Exception {
+        SecretKey key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), ALGORITHM);
+
         Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.ENCRYPT_MODE, key);
+
         byte[] encryptedBytes = cipher.doFinal(plainText.getBytes());
+
         return Base64.getEncoder().encodeToString(encryptedBytes);
     }
 
-    // Decrypt the given ciphertext using AES and the secret key
-    public static String decrypt(String encryptedText, String secretKey) throws Exception {
-        SecretKey key = new SecretKeySpec(secretKey.getBytes(), ALGORITHM);
+    public String decrypt(String encryptedText) throws Exception {
+        SecretKey key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), ALGORITHM);
+
         Cipher cipher = Cipher.getInstance(ALGORITHM);
         cipher.init(Cipher.DECRYPT_MODE, key);
+
         byte[] decodedBytes = Base64.getDecoder().decode(encryptedText);
         byte[] decryptedBytes = cipher.doFinal(decodedBytes);
+
         return new String(decryptedBytes);
+    }
+
+    public List<Variable> decryptList(List<Variable> encryptedVars) throws Exception {
+        for(Variable v : encryptedVars) {
+            v.setKey(decrypt(v.getKey()));
+            v.setValue(decrypt(v.getValue()));
+        }
+
+        return encryptedVars;
     }
 }
