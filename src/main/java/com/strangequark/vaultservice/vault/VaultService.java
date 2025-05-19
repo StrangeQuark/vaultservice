@@ -28,8 +28,14 @@ public class VaultService {
 
     public ResponseEntity<?> createService(String serviceName) {
         try {
+            for(Service s : serviceRepository.findAll()) {
+                if(s.getName().equals(serviceName))
+                    return ResponseEntity.status(400).body(new ErrorResponse("That service name already exists"));
+            }
+
             Service service = new Service();
             service.setName(serviceName);
+
             Service savedService = serviceRepository.save(service);
 
             // Add default environments
@@ -47,6 +53,11 @@ public class VaultService {
         try {
             Service service = serviceRepository.findByName(serviceName);
             if (service == null) throw new RuntimeException("Service not found");
+
+            for(Environment env : service.getEnvironments()) {
+                if(env.getName().equals(environmentName))
+                    return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists in this service"));
+            }
 
             Environment environment = new Environment();
             environment.setName(environmentName);
@@ -126,6 +137,12 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
             if (environment == null) throw new RuntimeException("Environment not found");
 
+            //Ensure the variable name doesn't already exist
+            for(Variable var : environment.getVariables()) {
+                if(encryptionUtility.decrypt(var.getKey()).equals(variable.getKey()))
+                    return ResponseEntity.status(400).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
+            }
+
             variable.setEnvironment(environment);
 
             //Encrypt the variables key/value pair
@@ -134,7 +151,7 @@ public class VaultService {
 
             variableRepository.save(variable);
 
-            return ResponseEntity.ok("Variable successfully added");
+            return ResponseEntity.ok(variable);
         } catch (RuntimeException runtimeException) {
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
