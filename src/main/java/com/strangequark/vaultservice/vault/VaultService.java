@@ -159,9 +159,18 @@ public class VaultService {
         }
     }
 
-    public ResponseEntity<?> deleteVariable(Long id) {
+    public ResponseEntity<?> deleteVariable(String serviceName, String environmentName, String variableName) {
         try {
-            variableRepository.deleteById(id);
+            Service service = serviceRepository.findByName(serviceName);
+            if (service == null) throw new RuntimeException("Service not found");
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId());
+            if (environment == null) throw new RuntimeException("Environment not found");
+
+            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), encryptionUtility.encrypt(variableName))
+                    .orElseThrow(() -> new RuntimeException("Variable not found"));
+
+            variableRepository.deleteById(variable.getId());
 
             return ResponseEntity.ok("Variable successfully deleted");
         } catch (Exception ex) {
