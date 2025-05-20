@@ -38,11 +38,6 @@ public class VaultService {
 
             Service savedService = serviceRepository.save(service);
 
-            // Add default environments
-            createEnvironment(serviceName, "e1");
-            createEnvironment(serviceName, "e2");
-            createEnvironment(serviceName, "e3");
-
             return ResponseEntity.ok(savedService);
         } catch (Exception ex) {
             return ResponseEntity.status(400).body(new ErrorResponse("Service creation failed"));
