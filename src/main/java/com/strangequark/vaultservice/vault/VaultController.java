@@ -51,9 +51,12 @@ public class VaultController {
         return vaultService.addVariable(serviceName, environmentName, variable);
     }
 
-    @DeleteMapping("/variables/{id}")
-    public ResponseEntity<?> deleteVariable(@PathVariable Long id) {
-        return vaultService.deleteVariable(id);
+    @DeleteMapping("/{serviceName}/{environmentName}/variables/{variableName}")
+    public ResponseEntity<?> deleteVariable(
+            @PathVariable String serviceName,
+            @PathVariable String environmentName,
+            @PathVariable String variableName) {
+        return vaultService.deleteVariable(serviceName, environmentName, variableName);
     }
 
     @DeleteMapping("/{serviceName}/{environmentName}")
