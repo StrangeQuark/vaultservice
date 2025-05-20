@@ -23,6 +23,18 @@ public class VaultController {
         return vaultService.createEnvironment(serviceName, environmentName);
     }
 
+    @GetMapping("/{serviceName}")
+    public ResponseEntity<?> getService(@PathVariable String serviceName) {
+        return vaultService.getService(serviceName);
+    }
+
+    @GetMapping("/{serviceName}/{environmentName}")
+    public ResponseEntity<?> getEnvironment(
+            @PathVariable String serviceName,
+            @PathVariable String environmentName) {
+        return vaultService.getEnvironment(serviceName, environmentName);
+    }
+
     @GetMapping("/{serviceName}/variables")
     public ResponseEntity<?> getVariablesByService(@PathVariable String serviceName) {
         return vaultService.getVariablesByService(serviceName);
