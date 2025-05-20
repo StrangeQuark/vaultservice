@@ -72,6 +72,35 @@ public class VaultService {
         }
     }
 
+    public ResponseEntity<?> getService(String serviceName) {
+        try {
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));;
+
+            return ResponseEntity.ok(service);
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete service"));
+        }
+    }
+
+    public ResponseEntity<?> getEnvironment(String serviceName, String environmentName) {
+        try {
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));;
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
+                    .orElseThrow(() -> new RuntimeException("Environment not found"));;
+
+            return ResponseEntity.ok(environment);
+        } catch (RuntimeException runtimeException) {
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete environment"));
+        }
+    }
+
     public ResponseEntity<?> getVariablesByService(String serviceName) {
         try {
             Service service = serviceRepository.findByName(serviceName)
