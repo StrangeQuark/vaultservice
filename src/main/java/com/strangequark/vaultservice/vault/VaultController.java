@@ -13,41 +13,41 @@ public class VaultController {
     @Autowired
     private VaultService vaultService;
 
-    @PostMapping("/{serviceName}")
+    @PostMapping("/createService/{serviceName}")
     public ResponseEntity<?> createService(@PathVariable String serviceName) {
         return vaultService.createService(serviceName);
     }
 
-    @PostMapping("/{serviceName}/{environmentName}")
+    @PostMapping("/createEnvironment/{serviceName}/{environmentName}")
     public ResponseEntity<?> createEnvironment(@PathVariable String serviceName, @PathVariable String environmentName) {
         return vaultService.createEnvironment(serviceName, environmentName);
     }
 
-    @GetMapping("/{serviceName}")
+    @GetMapping("/getService/{serviceName}")
     public ResponseEntity<?> getService(@PathVariable String serviceName) {
         return vaultService.getService(serviceName);
     }
 
-    @GetMapping("/{serviceName}/{environmentName}")
+    @GetMapping("/getEnvironment/{serviceName}/{environmentName}")
     public ResponseEntity<?> getEnvironment(
             @PathVariable String serviceName,
             @PathVariable String environmentName) {
         return vaultService.getEnvironment(serviceName, environmentName);
     }
 
-    @GetMapping("/{serviceName}/variables")
+    @GetMapping("/getVariablesByService/{serviceName}")
     public ResponseEntity<?> getVariablesByService(@PathVariable String serviceName) {
         return vaultService.getVariablesByService(serviceName);
     }
 
-    @GetMapping("/{serviceName}/{environmentName}/variables")
+    @GetMapping("/getVariablesByEnvironment/{serviceName}/{environmentName}")
     public ResponseEntity<?> getVariablesByEnvironment(
             @PathVariable String serviceName,
             @PathVariable String environmentName) {
         return vaultService.getVariablesByEnvironment(serviceName, environmentName);
     }
 
-    @GetMapping("/{serviceName}/{environmentName}/variables/{variableName}")
+    @GetMapping("/getVariableByName/{serviceName}/{environmentName}/{variableName}")
     public ResponseEntity<?> getVariableByName(
             @PathVariable String serviceName,
             @PathVariable String environmentName,
@@ -55,7 +55,7 @@ public class VaultController {
         return vaultService.getVariableByName(serviceName, environmentName, variableName);
     }
 
-    @PostMapping("/{serviceName}/{environmentName}/variables")
+    @PostMapping("/addVariable/{serviceName}/{environmentName}")
     public ResponseEntity<?> addVariable(
             @PathVariable String serviceName,
             @PathVariable String environmentName,
@@ -63,7 +63,7 @@ public class VaultController {
         return vaultService.addVariable(serviceName, environmentName, variable);
     }
 
-    @DeleteMapping("/{serviceName}/{environmentName}/variables/{variableName}")
+    @DeleteMapping("/deleteVariable/{serviceName}/{environmentName}/{variableName}")
     public ResponseEntity<?> deleteVariable(
             @PathVariable String serviceName,
             @PathVariable String environmentName,
@@ -71,14 +71,14 @@ public class VaultController {
         return vaultService.deleteVariable(serviceName, environmentName, variableName);
     }
 
-    @DeleteMapping("/{serviceName}/{environmentName}")
+    @DeleteMapping("/deleteEnvironment/{serviceName}/{environmentName}")
     public ResponseEntity<?> deleteEnvironment(
             @PathVariable String serviceName,
             @PathVariable String environmentName) {
         return vaultService.deleteEnvironment(serviceName, environmentName);
     }
 
-    @DeleteMapping("/{serviceName}")
+    @DeleteMapping("/deleteService/{serviceName}")
     public ResponseEntity<?> deleteService(@PathVariable String serviceName) {
         return vaultService.deleteService(serviceName);
     }
