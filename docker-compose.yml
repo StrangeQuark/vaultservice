@@ -1,21 +1,31 @@
 services:
-  app:
+  vault-service:
     build: .
+    networks:
+      - shared-network
+      - vaultdb-network
     ports:
       - "6020:6020"
-    container_name: vault-app
+    container_name: vault-service
     depends_on:
-      - db
+      - vault-db
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - ACCESS_SECRET_KEY=${ACCESS_SECRET_KEY}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-  db:
+  vault-db:
     image: 'postgres:13.1-alpine'
-    container_name: vault-database
+    container_name: vault-db
+    networks:
+      - vaultdb-network
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+networks:
+  vaultdb-network:
+    external: true
+  shared-network:
+    external: true
