@@ -31,8 +31,6 @@ public class WebSecurityConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                boolean dockerDeployment = Boolean.parseBoolean(System.getenv("DOCKER_DEPLOYMENT"));
-
                 //Allow the reactService through the CORS policy
                 registry.addMapping("/**")
                         .allowedOrigins(
