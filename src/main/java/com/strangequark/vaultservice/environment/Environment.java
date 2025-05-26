@@ -13,6 +13,20 @@ import java.util.List;
 @Table(name = "environments")
 public class Environment {
 
+    public Environment() {
+
+    }
+
+    public Environment(Service service, String name) {
+        this.service = service;
+        this.name = name;
+    }
+
+    public Environment(Service service, String name, List<Variable> variables) {
+        this(service, name);
+        this.variables = variables;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
