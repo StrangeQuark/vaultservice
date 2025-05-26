@@ -10,6 +10,16 @@ import java.time.LocalDateTime;
 @Table(name = "variables")
 public class Variable {
 
+    public Variable() {
+
+    }
+
+    public Variable(Environment environment, String key, String value) {
+        this.environment = environment;
+        this.key = key;
+        this.value = value;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,10 +29,10 @@ public class Variable {
     @JsonBackReference
     private Environment environment;
 
-    @Column(nullable = false)
+    @Column(name = "var_key", nullable = false)
     private String key;
 
-    @Column
+    @Column(name = "var_value")
     private String value;
 
     @Column(name = "created_at", nullable = false, updatable = false)
