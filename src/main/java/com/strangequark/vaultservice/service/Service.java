@@ -11,6 +11,19 @@ import java.util.List;
 @Table(name = "services")
 public class Service {
 
+    public Service() {
+
+    }
+
+    public Service(String name) {
+        this.name = name;
+    }
+
+    public Service(String name, List<Environment> environments) {
+        this(name);
+        this.environments = environments;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
