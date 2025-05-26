@@ -10,6 +10,16 @@ import java.time.LocalDateTime;
 @Table(name = "variables")
 public class Variable {
 
+    public Variable() {
+
+    }
+
+    public Variable(Environment environment, String key, String value) {
+        this.environment = environment;
+        this.key = key;
+        this.value = value;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
