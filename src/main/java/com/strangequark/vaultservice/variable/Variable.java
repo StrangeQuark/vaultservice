@@ -29,10 +29,10 @@ public class Variable {
     @JsonBackReference
     private Environment environment;
 
-    @Column(nullable = false)
+    @Column(name = "var_key", nullable = false)
     private String key;
 
-    @Column
+    @Column(name = "var_value")
     private String value;
 
     @Column(name = "created_at", nullable = false, updatable = false)
