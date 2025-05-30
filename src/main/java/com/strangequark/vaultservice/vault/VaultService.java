@@ -9,6 +9,8 @@ import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
 import com.strangequark.vaultservice.variable.VariableResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 @org.springframework.stereotype.Service
 public class VaultService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(VaultService.class);
 
     @Autowired
     private ServiceRepository serviceRepository;
@@ -28,9 +31,11 @@ public class VaultService {
 
     public ResponseEntity<?> createService(String serviceName) {
         try {
-            for(Service s : serviceRepository.findAll()) {
-                if(s.getName().equals(serviceName))
-                    return ResponseEntity.status(400).body(new ErrorResponse("That service name already exists"));
+            LOGGER.info("Attempting to create service: " + serviceName);
+
+            if(serviceRepository.findByName(serviceName).isPresent()) {
+                LOGGER.error("Service creation failed - A service already exists with a name of: " + serviceName);
+                return ResponseEntity.status(400).body(new ErrorResponse("That service name already exists"));
             }
 
             Service service = new Service();
@@ -40,18 +45,22 @@ public class VaultService {
 
             return ResponseEntity.ok(savedService);
         } catch (Exception ex) {
+            LOGGER.error("Service creation failed - " + ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Service creation failed"));
         }
     }
 
     public ResponseEntity<?> createEnvironment(String serviceName, String environmentName) {
         try {
+            LOGGER.info("Attempting to create environment: " + serviceName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            for(Environment env : service.getEnvironments()) {
-                if(env.getName().equals(environmentName))
-                    return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists in this service"));
+            if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
+                LOGGER.error("Environment creation failed - An environment already exists with a name of: " + environmentName +
+                        " for service: " + serviceName);
+                return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists in this service"));
             }
 
             Environment environment = new Environment();
@@ -61,14 +70,18 @@ public class VaultService {
 
             return ResponseEntity.ok(environment);
         } catch (RuntimeException runtimeException) {
+            LOGGER.error("Service was not found with name: " + serviceName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
+            LOGGER.error("Environment creation failed - " + ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Environment creation failed"));
         }
     }
 
     public ResponseEntity<?> getService(String serviceName) {
         try {
+            LOGGER.info("Attempting to get service: " + serviceName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -78,14 +91,18 @@ public class VaultService {
 
             return ResponseEntity.ok(service);
         } catch (RuntimeException runtimeException) {
+            LOGGER.error("Service was not found with name: " + serviceName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
-            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete service"));
+            LOGGER.error("Service retrieval failed: " + ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse("Service retrieval failed"));
         }
     }
 
     public ResponseEntity<?> getEnvironment(String serviceName, String environmentName) {
         try {
+            LOGGER.info("Attempting to get environment: " + environmentName + " from service: " + serviceName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -96,14 +113,18 @@ public class VaultService {
 
             return ResponseEntity.ok(environment);
         } catch (RuntimeException runtimeException) {
+            LOGGER.error(runtimeException.getMessage() + " for service/environment: " + serviceName + "/" + environmentName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
-            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete environment"));
+            LOGGER.error("Environment retrieval failed: " + ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse("Environment retrieval failed"));
         }
     }
 
     public ResponseEntity<?> getVariablesByService(String serviceName) {
         try {
+            LOGGER.info("Attempting to get variables for service: " + serviceName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -111,8 +132,10 @@ public class VaultService {
 
             return ResponseEntity.ok(encryptionUtility.decryptList(variables));
         } catch (RuntimeException runtimeException) {
+            LOGGER.error("Service was not found with name: " + serviceName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
+            LOGGER.error("Unable to fetch variables for " + serviceName + " --- " + ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variables for " + serviceName));
         }
 
@@ -120,6 +143,9 @@ public class VaultService {
 
     public ResponseEntity<?> getVariablesByEnvironment(String serviceName, String environmentName) {
         try {
+            LOGGER.info("Attempting to get variables for environment: " + environmentName + " of service: " + serviceName);
+
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -139,6 +165,8 @@ public class VaultService {
 
     public ResponseEntity<?> getVariableByName(String serviceName, String environmentName, String variableName) {
         try {
+            LOGGER.info("Attempting to get variable by name: " + variableName + " of environment: " + environmentName + " of service: " + serviceName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -162,6 +190,8 @@ public class VaultService {
 
     public ResponseEntity<?> addVariable(String serviceName, String environmentName, Variable variable) {
         try {
+            LOGGER.info("Attempting to create variable for service/environment: " + serviceName + "/" + environmentName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -192,6 +222,8 @@ public class VaultService {
 
     public ResponseEntity<?> deleteVariable(String serviceName, String environmentName, String variableName) {
         try {
+            LOGGER.info("Attempting to delete variable for service/environment: " + serviceName + "/" + environmentName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -211,6 +243,8 @@ public class VaultService {
 
     public ResponseEntity<?> deleteEnvironment(String serviceName, String environmentName) {
         try {
+            LOGGER.info("Attempting to delete environment: " + environmentName + " of service: " + serviceName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -229,6 +263,8 @@ public class VaultService {
 
     public ResponseEntity<?> deleteService(String serviceName) {
         try {
+            LOGGER.info("Attempting to delete service: " + serviceName);
+
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
