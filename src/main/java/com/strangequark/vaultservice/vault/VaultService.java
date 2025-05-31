@@ -145,7 +145,6 @@ public class VaultService {
         try {
             LOGGER.info("Attempting to get variables for environment: " + environmentName + " of service: " + serviceName);
 
-
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
@@ -156,8 +155,10 @@ public class VaultService {
 
             return ResponseEntity.ok(encryptionUtility.decryptList(variables));
         } catch (RuntimeException runtimeException) {
+            LOGGER.error(runtimeException.getMessage() + " for service/environment: " + serviceName + "/" + environmentName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
+            LOGGER.error("Unable to fetch variables for " + environmentName + " of service " + serviceName + " --- " + ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variables for " +
                     environmentName + " of " + serviceName + " service"));
         }
@@ -182,8 +183,10 @@ public class VaultService {
 
             return ResponseEntity.ok(new VariableResponse(variable));
         } catch (RuntimeException runtimeException) {
+            LOGGER.error(runtimeException.getMessage() + " for service/environment/variable: " + serviceName + "/" + environmentName + "/" + variableName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
+            LOGGER.error("Unable to fetch variable: " + variableName + " of service/environment: " + serviceName + "/" + environmentName);
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variable " + variableName));
         }
     }
@@ -200,8 +203,10 @@ public class VaultService {
 
             //Ensure the variable name doesn't already exist
             for(Variable var : environment.getVariables()) {
-                if(encryptionUtility.decrypt(var.getKey()).equals(variable.getKey()))
+                if(encryptionUtility.decrypt(var.getKey()).equals(variable.getKey())) {
+                    LOGGER.error("Variable cannot be created as it already exists for service/environment: " + serviceName + "/" + environmentName);
                     return ResponseEntity.status(400).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
+                }
             }
 
             variable.setEnvironment(environment);
@@ -214,8 +219,10 @@ public class VaultService {
 
             return ResponseEntity.ok(variable);
         } catch (RuntimeException runtimeException) {
+            LOGGER.error(runtimeException.getMessage() + " for service/environment: " + serviceName + "/" + environmentName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
+            LOGGER.error("Unable to add variable to service/environment: " + serviceName + "/" + environmentName + " --- " + ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to add variable"));
         }
     }
@@ -236,7 +243,11 @@ public class VaultService {
             variableRepository.deleteById(variable.getId());
 
             return ResponseEntity.ok("Variable successfully deleted");
+        } catch (RuntimeException runtimeException) {
+            LOGGER.error(runtimeException.getMessage() + " for service/environment/variable: " + serviceName + "/" + environmentName + "/" + variableName);
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
+            LOGGER.error("Unable to delete variable: " + variableName + " for service/environment: " + serviceName + "/" + environmentName + " --- " + ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete variable"));
         }
     }
@@ -255,8 +266,10 @@ public class VaultService {
 
             return ResponseEntity.ok("Environment successfully deleted");
         } catch (RuntimeException runtimeException) {
+            LOGGER.error(runtimeException.getMessage() + " for service/environment: " + serviceName + "/" + environmentName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
+            LOGGER.error("Unable to delete environment: " + environmentName + " for service: " + serviceName +  " --- " + ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete environment"));
         }
     }
@@ -272,8 +285,10 @@ public class VaultService {
 
             return ResponseEntity.ok("Service successfully deleted");
         } catch (RuntimeException runtimeException) {
+            LOGGER.error("Service not found for name: " + serviceName);
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
+            LOGGER.error("Unable to delete service: " + serviceName + " --- " + ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete service"));
         }
     }
