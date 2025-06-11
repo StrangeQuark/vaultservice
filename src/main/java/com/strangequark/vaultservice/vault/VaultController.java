@@ -72,6 +72,13 @@ public class VaultController {
         return vaultService.addEnvFile(serviceName, environmentName, file);
     }
 
+    @GetMapping("/downloadEnvFile/{serviceName}/{environmentName}")
+    public ResponseEntity<?> downloadEnvFile(
+            @PathVariable String serviceName,
+            @PathVariable String environmentName) {
+        return vaultService.downloadEnvFile(serviceName, environmentName);
+    }
+
     @DeleteMapping("/deleteVariable/{serviceName}/{environmentName}/{variableName}")
     public ResponseEntity<?> deleteVariable(
             @PathVariable String serviceName,
