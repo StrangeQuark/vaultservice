@@ -5,6 +5,7 @@ import com.strangequark.vaultservice.variable.Variable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/vault")
@@ -61,6 +62,14 @@ public class VaultController {
             @PathVariable String environmentName,
             @RequestBody Variable variable) {
         return vaultService.addVariable(serviceName, environmentName, variable);
+    }
+
+    @PostMapping("/addEnvFile/{serviceName}/{environmentName}")
+    public ResponseEntity<?> addEnvFile(
+            @PathVariable String serviceName,
+            @PathVariable String environmentName,
+            @RequestParam("file") MultipartFile file) {
+        return vaultService.addEnvFile(serviceName, environmentName, file);
     }
 
     @DeleteMapping("/deleteVariable/{serviceName}/{environmentName}/{variableName}")
