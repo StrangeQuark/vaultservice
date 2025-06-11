@@ -12,12 +12,16 @@ import com.strangequark.vaultservice.variable.VariableResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -310,6 +314,42 @@ public class VaultService {
         }
     }
 
+    public ResponseEntity<?> downloadEnvFile(String serviceName, String environmentName) {
+        try {
+            LOGGER.info("Attempting to generate .env file for environment: " + environmentName + " of service: " + serviceName);
+
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
+                    .orElseThrow(() -> new RuntimeException("Environment not found"));
+
+            List<Variable> decryptedVariables = encryptionUtility.decryptList(variableRepository.findByEnvironmentId(environment.getId()));
+
+            // Generate .env content
+            StringBuilder envContent = new StringBuilder();
+            for (Variable variable : decryptedVariables) {
+                envContent.append(variable.getKey()).append("=").append(variable.getValue()).append("\n");
+            }
+
+            byte[] envBytes = envContent.toString().getBytes(StandardCharsets.UTF_8);
+            ByteArrayResource resource = new ByteArrayResource(envBytes);
+
+            String filename = serviceName + "-" + environmentName + ".env";
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .contentLength(envBytes.length)
+                    .body(resource);
+        } catch (RuntimeException runtimeException) {
+            LOGGER.error(runtimeException.getMessage() + " for service/environment: " + serviceName + "/" + environmentName);
+            return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
+        } catch (Exception ex) {
+            LOGGER.error("Unable to generate .env file for " + environmentName + " of service " + serviceName + " --- " + ex.getMessage());
+            return ResponseEntity.status(500).body(new ErrorResponse("Failed to generate .env file"));
+        }
+    }
 
     public ResponseEntity<?> deleteVariable(String serviceName, String environmentName, String variableName) {
         try {
