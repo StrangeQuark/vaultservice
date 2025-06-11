@@ -13,8 +13,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
 public class VaultService {
@@ -226,6 +237,79 @@ public class VaultService {
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to add variable"));
         }
     }
+
+    public ResponseEntity<?> addEnvFile(String serviceName, String environmentName, MultipartFile file) {
+        LOGGER.info("Attempting to upload env file to service/environment: " + serviceName + "/" + environmentName);
+
+        try {
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
+                    .orElseThrow(() -> new RuntimeException("Environment not found"));
+
+            String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1);
+            if (!fileExtension.equals("env")) {
+                LOGGER.error("File extension is not .env");
+                return ResponseEntity.status(400).body(new ErrorResponse("File extension is not .env"));
+            }
+
+            // Existing keys in decrypted form to skip duplicates
+            Set<String> existingKeys = environment.getVariables().stream()
+                    .map(var -> {
+                        try {
+                            return encryptionUtility.decrypt(var.getKey());
+                        } catch (Exception e) {
+                            LOGGER.warn("Decryption failed for a key", e);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+            String line;
+            int added = 0;
+            int skipped = 0;
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                // Skip empty lines and comments
+                if (line.isEmpty() || line.startsWith("#")) continue;
+
+                int equalsIndex = line.indexOf('=');
+                if (equalsIndex == -1) continue; // Skip invalid lines
+
+                String key = line.substring(0, equalsIndex).trim();
+                String value = line.substring(equalsIndex + 1).trim();
+
+                if (existingKeys.contains(key)) {
+                    LOGGER.info("Skipping existing variable: " + key);
+                    skipped++;
+                    continue;
+                }
+
+                Variable variable = new Variable();
+                variable.setEnvironment(environment);
+                variable.setKey(encryptionUtility.encrypt(key));
+                variable.setValue(encryptionUtility.encrypt(value));
+
+                variableRepository.save(variable);
+                added++;
+            }
+
+            LOGGER.info("File processed: " + added + " variables added, " + skipped + " skipped.");
+            return ResponseEntity.ok("Variables added: " + added + ", Skipped: " + skipped);
+        } catch (NullPointerException ex) {
+            LOGGER.error("NPE - Invalid file extension");
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse("File upload failed, invalid file extension"));
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error processing env file", ex);
+            return ResponseEntity.status(500).body(new ErrorResponse("Failed to process env file"));
+        }
+    }
+
 
     public ResponseEntity<?> deleteVariable(String serviceName, String environmentName, String variableName) {
         try {
