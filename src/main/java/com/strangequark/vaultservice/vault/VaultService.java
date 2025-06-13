@@ -55,7 +55,8 @@ public class VaultService {
 
             return ResponseEntity.ok(savedService);
         } catch (Exception ex) {
-            LOGGER.error("Service creation failed - " + ex.getMessage());
+            LOGGER.error("Service creation failed");
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Service creation failed"));
         }
     }
@@ -81,9 +82,11 @@ public class VaultService {
             return ResponseEntity.ok(environment);
         } catch (RuntimeException runtimeException) {
             LOGGER.error("Service was not found with name: " + serviceName);
+            LOGGER.error(runtimeException.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
-            LOGGER.error("Environment creation failed - " + ex.getMessage());
+            LOGGER.error("Environment creation failed");
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Environment creation failed"));
         }
     }
@@ -102,9 +105,11 @@ public class VaultService {
             return ResponseEntity.ok(service);
         } catch (RuntimeException runtimeException) {
             LOGGER.error("Service was not found with name: " + serviceName);
+            LOGGER.error(runtimeException.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
             LOGGER.error("Service retrieval failed: " + ex.getMessage());
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Service retrieval failed"));
         }
     }
@@ -123,10 +128,12 @@ public class VaultService {
 
             return ResponseEntity.ok(environment);
         } catch (RuntimeException runtimeException) {
-            LOGGER.error(runtimeException.getMessage() + " for service/environment: " + serviceName + "/" + environmentName);
+            LOGGER.error("Runetime exception for service/environment: " + serviceName + "/" + environmentName);
+            LOGGER.error(runtimeException.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
-            LOGGER.error("Environment retrieval failed: " + ex.getMessage());
+            LOGGER.error("Environment retrieval failed");
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Environment retrieval failed"));
         }
     }
@@ -143,9 +150,11 @@ public class VaultService {
             return ResponseEntity.ok(encryptionUtility.decryptList(variables));
         } catch (RuntimeException runtimeException) {
             LOGGER.error("Service was not found with name: " + serviceName);
+            LOGGER.error(runtimeException.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
-            LOGGER.error("Unable to fetch variables for " + serviceName + " --- " + ex.getMessage());
+            LOGGER.error("Unable to fetch variables for " + serviceName);
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variables for " + serviceName));
         }
 
@@ -165,10 +174,12 @@ public class VaultService {
 
             return ResponseEntity.ok(encryptionUtility.decryptList(variables));
         } catch (RuntimeException runtimeException) {
-            LOGGER.error(runtimeException.getMessage() + " for service/environment: " + serviceName + "/" + environmentName);
+            LOGGER.error("Runtime exception for service/environment: " + serviceName + "/" + environmentName);
+            LOGGER.error(runtimeException.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
-            LOGGER.error("Unable to fetch variables for " + environmentName + " of service " + serviceName + " --- " + ex.getMessage());
+            LOGGER.error("Unable to fetch variables for " + environmentName + " of service " + serviceName);
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variables for " +
                     environmentName + " of " + serviceName + " service"));
         }
@@ -193,10 +204,12 @@ public class VaultService {
 
             return ResponseEntity.ok(new VariableResponse(variable));
         } catch (RuntimeException runtimeException) {
-            LOGGER.error(runtimeException.getMessage() + " for service/environment/variable: " + serviceName + "/" + environmentName + "/" + variableName);
+            LOGGER.error("Runtime exception for service/environment/variable: " + serviceName + "/" + environmentName + "/" + variableName);
+            LOGGER.error(runtimeException.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(runtimeException.getMessage()));
         } catch (Exception ex) {
             LOGGER.error("Unable to fetch variable: " + variableName + " of service/environment: " + serviceName + "/" + environmentName);
+            LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Unable to fetch variable " + variableName));
         }
     }
