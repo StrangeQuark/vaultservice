@@ -4,6 +4,7 @@ import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceRepository;
+import com.strangequark.vaultservice.utility.EncryptionUtility;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRepository;
 import com.strangequark.vaultservice.vault.VaultService;
@@ -27,6 +28,8 @@ public abstract class BaseServiceTest {
     public VariableRepository variableRepository;
     @Autowired
     public VaultService vaultService;
+    @Autowired
+    public EncryptionUtility encryptionUtility;
 
     public Service testService;
     public Environment testEnvironment;
@@ -34,19 +37,23 @@ public abstract class BaseServiceTest {
 
     @BeforeEach
     void setup() {
-        testService = new Service("testService");
-        testEnvironment = new Environment(testService, "testEnvironment");
-        testVariable = new Variable(testEnvironment, "testKey", "testValue");
+        try {
+            testService = new Service("testService");
+            testEnvironment = new Environment(testService, "testEnvironment");
+            testVariable = new Variable(testEnvironment, encryptionUtility.encrypt("testKey"), encryptionUtility.encrypt("testValue"));
 
-        serviceRepository.save(testService);
-        environmentRepository.save(testEnvironment);
-        variableRepository.save(testVariable);
+            serviceRepository.save(testService);
+            environmentRepository.save(testEnvironment);
+            variableRepository.save(testVariable);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     @AfterEach
     void teardown() {
-        serviceRepository.deleteAll();
-        environmentRepository.deleteAll();
         variableRepository.deleteAll();
+        environmentRepository.deleteAll();
+        serviceRepository.deleteAll();
     }
 }
