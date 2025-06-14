@@ -1,21 +1,22 @@
 package com.strangequark.vaultservice.utility;
 
 import com.strangequark.vaultservice.variable.Variable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
 @Component
 public class EncryptionUtility {
 
-    private final String ALGORITHM = "AES";
+    private String ALGORITHM = "AES";
 
-    private final String ENCRYPTION_KEY = System.getenv("ENCRYPTION_KEY");
+    @Value("${ENCRYPTION_KEY}")
+    private String ENCRYPTION_KEY;
 
     public String encrypt(String plainText) throws Exception {
         SecretKey key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), ALGORITHM);
