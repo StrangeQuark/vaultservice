@@ -91,6 +91,7 @@ public class VaultService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getService(String serviceName) {
         try {
             LOGGER.info("Attempting to get service");
@@ -114,6 +115,7 @@ public class VaultService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getEnvironment(String serviceName, String environmentName) {
         try {
             LOGGER.info("Attempting to get environment");

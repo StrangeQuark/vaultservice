@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
 public class VaultServiceTest extends BaseServiceTest {
-
     @Test
     void createServiceTest() {
         ResponseEntity<?> response =  vaultService.createService("testService1");
@@ -20,5 +19,12 @@ public class VaultServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(environmentRepository.findByNameAndServiceId("testEnvironment1", testService.getId()).isPresent());
+    }
+
+    @Test
+    void getServiceTest() {
+        ResponseEntity<?> response =  vaultService.getService("testService");
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
     }
 }
