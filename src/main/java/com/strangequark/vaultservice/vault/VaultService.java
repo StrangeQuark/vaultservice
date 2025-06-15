@@ -40,6 +40,7 @@ public class VaultService {
     @Autowired
     private EncryptionUtility encryptionUtility;
 
+    @Transactional
     public ResponseEntity<?> createService(String serviceName) {
         try {
             LOGGER.info("Attempting to create service");
@@ -62,6 +63,7 @@ public class VaultService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> createEnvironment(String serviceName, String environmentName) {
         try {
             LOGGER.info("Attempting to create environment");
@@ -140,6 +142,7 @@ public class VaultService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getVariablesByService(String serviceName) {
         try {
             LOGGER.info("Attempting to get variables by service");
@@ -159,9 +162,9 @@ public class VaultService {
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse("Retrieval of variables by service failed"));
         }
-
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getVariablesByEnvironment(String serviceName, String environmentName) {
         try {
             LOGGER.info("Attempting to get variables by environment");
@@ -186,6 +189,7 @@ public class VaultService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getVariableByName(String serviceName, String environmentName, String variableName) {
         try {
             LOGGER.info("Attempting to get variable by name");
@@ -215,6 +219,7 @@ public class VaultService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> addVariable(String serviceName, String environmentName, Variable variable) {
         try {
             LOGGER.info("Attempting to add variable");
@@ -253,6 +258,7 @@ public class VaultService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> addEnvFile(String serviceName, String environmentName, MultipartFile file) {
         LOGGER.info("Attempting to upload env file");
 
@@ -327,6 +333,7 @@ public class VaultService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<?> downloadEnvFile(String serviceName, String environmentName) {
         try {
             LOGGER.info("Attempting to download .env file");
@@ -367,6 +374,7 @@ public class VaultService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> deleteVariable(String serviceName, String environmentName, String variableName) {
         try {
             LOGGER.info("Attempting to delete variable");
@@ -395,6 +403,7 @@ public class VaultService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> deleteEnvironment(String serviceName, String environmentName) {
         try {
             LOGGER.info("Attempting to delete environment");
@@ -420,6 +429,7 @@ public class VaultService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> deleteService(String serviceName) {
         try {
             LOGGER.info("Attempting to delete service");
