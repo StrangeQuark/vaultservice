@@ -34,8 +34,7 @@ public class WebSecurityConfig {
                 //Allow the reactService through the CORS policy
                 registry.addMapping("/**")
                         .allowedOrigins(
-                                "http://react-service:5173", "http://localhost:5173",
-                                "http://gateway-service:8080", "http://localhost:8080"
+                                "http://react-service:6080"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowCredentials(true);
