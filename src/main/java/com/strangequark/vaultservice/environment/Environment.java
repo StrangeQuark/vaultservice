@@ -8,6 +8,7 @@ import com.strangequark.vaultservice.variable.Variable;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "environments")
@@ -28,8 +29,8 @@ public class Environment {
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
 
     @ManyToOne
     @JoinColumn(name = "service_id", nullable = false)
@@ -60,11 +61,11 @@ public class Environment {
         updatedAt = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
