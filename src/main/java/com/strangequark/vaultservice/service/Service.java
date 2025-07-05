@@ -3,6 +3,7 @@ package com.strangequark.vaultservice.service;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.strangequark.vaultservice.environment.Environment;
 
+import com.strangequark.vaultservice.utility.EncryptDecryptConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +31,7 @@ public class Service {
     private UUID id;
 
     @Column(unique = true, nullable = false)
+    @Convert(converter = EncryptDecryptConverter.class)
     private String name;
 
     @Column(name = "created_at", nullable = false, updatable = false)

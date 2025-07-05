@@ -3,6 +3,7 @@ package com.strangequark.vaultservice.environment;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.strangequark.vaultservice.service.Service;
+import com.strangequark.vaultservice.utility.EncryptDecryptConverter;
 import com.strangequark.vaultservice.variable.Variable;
 
 import jakarta.persistence.*;
@@ -38,6 +39,7 @@ public class Environment {
     private Service service;
 
     @Column(nullable = false)
+    @Convert(converter = EncryptDecryptConverter.class)
     private String name;
 
     @Column(name = "created_at", nullable = false, updatable = false)
