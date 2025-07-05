@@ -3,6 +3,7 @@ package com.strangequark.vaultservice.variable;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.strangequark.vaultservice.environment.Environment;
 
+import com.strangequark.vaultservice.utility.EncryptDecryptConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -31,9 +32,11 @@ public class Variable {
     private Environment environment;
 
     @Column(name = "var_key", nullable = false)
+    @Convert(converter = EncryptDecryptConverter.class)
     private String key;
 
     @Column(name = "var_value")
+    @Convert(converter = EncryptDecryptConverter.class)
     private String value;
 
     @Column(name = "created_at", nullable = false, updatable = false)

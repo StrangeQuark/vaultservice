@@ -3,7 +3,6 @@ package com.strangequark.vaultservice.vault;
 import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.error.ErrorResponse;
 import com.strangequark.vaultservice.service.Service;
-import com.strangequark.vaultservice.utility.EncryptionUtility;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
@@ -37,8 +36,6 @@ public class VaultService {
     private EnvironmentRepository environmentRepository;
     @Autowired
     private VariableRepository variableRepository;
-    @Autowired
-    private EncryptionUtility encryptionUtility;
 
     @Transactional
     public ResponseEntity<?> createService(String serviceName) {
@@ -102,7 +99,7 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
             for(Environment env : service.getEnvironments()) {
-                env.setVariables(encryptionUtility.decryptList(env.getVariables()));
+                env.setVariables(env.getVariables());
             }
 
             return ResponseEntity.ok(service);
@@ -128,7 +125,7 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            environment.setVariables(encryptionUtility.decryptList(environment.getVariables()));
+            environment.setVariables(environment.getVariables());
 
             return ResponseEntity.ok(environment);
         } catch (RuntimeException runtimeException) {
@@ -152,7 +149,7 @@ public class VaultService {
 
             List<Variable> variables = variableRepository.findByEnvironmentServiceId(service.getId());
 
-            return ResponseEntity.ok(encryptionUtility.decryptList(variables));
+            return ResponseEntity.ok(variables);
         } catch (RuntimeException runtimeException) {
             LOGGER.error("Runtime exception when getting variables by service");
             LOGGER.error(runtimeException.getMessage());
@@ -177,7 +174,7 @@ public class VaultService {
 
             List<Variable> variables = variableRepository.findByEnvironmentId(environment.getId());
 
-            return ResponseEntity.ok(encryptionUtility.decryptList(variables));
+            return ResponseEntity.ok(variables);
         } catch (RuntimeException runtimeException) {
             LOGGER.error("Runtime exception when getting variables by environment");
             LOGGER.error(runtimeException.getMessage());
@@ -200,12 +197,12 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), encryptionUtility.encrypt(variableName))
+            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
             //Decrypt the variables key/value pair
-            variable.setKey(encryptionUtility.decrypt(variable.getKey()));
-            variable.setValue(encryptionUtility.decrypt(variable.getValue()));
+            variable.setKey(variable.getKey());
+            variable.setValue(variable.getValue());
 
             return ResponseEntity.ok(new VariableResponse(variable));
         } catch (RuntimeException runtimeException) {
@@ -232,7 +229,7 @@ public class VaultService {
 
             //Ensure the variable name doesn't already exist
             for(Variable var : environment.getVariables()) {
-                if(encryptionUtility.decrypt(var.getKey()).equals(variable.getKey())) {
+                if(var.getKey().equals(variable.getKey())) {
                     LOGGER.error("Variable with that key already exists in this service/environment");
                     return ResponseEntity.status(400).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
                 }
@@ -241,8 +238,8 @@ public class VaultService {
             variable.setEnvironment(environment);
 
             //Encrypt the variables key/value pair
-            variable.setKey(encryptionUtility.encrypt(variable.getKey()));
-            variable.setValue(encryptionUtility.encrypt(variable.getValue()));
+            variable.setKey(variable.getKey());
+            variable.setValue(variable.getValue());
 
             variableRepository.save(variable);
 
@@ -279,7 +276,7 @@ public class VaultService {
             Set<String> existingKeys = environment.getVariables().stream()
                     .map(var -> {
                         try {
-                            return encryptionUtility.decrypt(var.getKey());
+                            return var.getKey();
                         } catch (Exception ex) {
                             LOGGER.error("Decryption failed for a key");
                             LOGGER.error(ex.getMessage());
@@ -313,8 +310,8 @@ public class VaultService {
 
                 Variable variable = new Variable();
                 variable.setEnvironment(environment);
-                variable.setKey(encryptionUtility.encrypt(key));
-                variable.setValue(encryptionUtility.encrypt(value));
+                variable.setKey(key);
+                variable.setValue(value);
 
                 variableRepository.save(variable);
                 added++;
@@ -344,7 +341,7 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            List<Variable> decryptedVariables = encryptionUtility.decryptList(variableRepository.findByEnvironmentId(environment.getId()));
+            List<Variable> decryptedVariables = variableRepository.findByEnvironmentId(environment.getId());
 
             // Generate .env content
             StringBuilder envContent = new StringBuilder();
@@ -385,7 +382,7 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), encryptionUtility.encrypt(variableName))
+            Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
             variableRepository.deleteById(variable.getId());
