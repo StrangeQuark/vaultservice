@@ -3,7 +3,8 @@ package com.strangequark.vaultservice.environment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
+import java.util.UUID;
 
-public interface EnvironmentRepository extends JpaRepository<Environment, Long> {
-    Optional<Environment> findByNameAndServiceId(String name, Long serviceId);
+public interface EnvironmentRepository extends JpaRepository<Environment, UUID> {
+    Optional<Environment> findByNameAndServiceId(String name, UUID serviceId);
 }
