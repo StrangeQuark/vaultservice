@@ -3,6 +3,11 @@ package com.strangequark.vaultservice.vault;
 import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.error.ErrorResponse;
 import com.strangequark.vaultservice.service.Service;
+import com.strangequark.vaultservice.serviceuser.ServiceUser;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRole;
+import com.strangequark.vaultservice.utility.JwtUtility;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
@@ -24,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
@@ -36,6 +42,10 @@ public class VaultService {
     private EnvironmentRepository environmentRepository;
     @Autowired
     private VariableRepository variableRepository;
+    @Autowired// Integration function start: Auth
+    private ServiceUserRepository serviceUserRepository;
+    @Autowired
+    JwtUtility jwtUtility;// Integration function end: Auth
 
     @Transactional
     public ResponseEntity<?> createService(String serviceName) {
@@ -44,19 +54,20 @@ public class VaultService {
 
             if(serviceRepository.findByName(serviceName).isPresent()) {
                 LOGGER.error("Service creation failed - That service name already exists");
-                return ResponseEntity.status(400).body(new ErrorResponse("That service name already exists"));
+                return ResponseEntity.status(400).body(new ErrorResponse("Service with that name already exists"));
             }
 
             Service service = new Service();
             service.setName(serviceName);
+            service.addUser(new ServiceUser(service, UUID.fromString(jwtUtility.extractId()), ServiceUserRole.OWNER));// Integration line: Auth
 
-            Service savedService = serviceRepository.save(service);
+            serviceRepository.save(service);
 
-            return ResponseEntity.ok(savedService);
+            LOGGER.info("New service successfully created");
+            return ResponseEntity.ok("New service successfully created");
         } catch (Exception ex) {
-            LOGGER.error("Service creation failed");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Service creation failed"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -67,6 +78,14 @@ public class VaultService {
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service and has the OWNER or MAINTAINER role
+            if (requestingUser == null || (requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER)) {
+                throw new RuntimeException("Only service users with OWNER or MANAGER roles can create environments");
+            }//Integration function end: Auth
 
             if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
                 LOGGER.error("Environment creation failed - An environment with that name already exists in this service");
@@ -79,14 +98,9 @@ public class VaultService {
             environmentRepository.save(environment);
 
             return ResponseEntity.ok(environment);
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when attempting to create environment");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Environment creation failed - runtime exception"));
         } catch (Exception ex) {
-            LOGGER.error("Environment creation failed");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Environment creation failed"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -98,19 +112,22 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to view this service");
+            }//Integration function end: Auth
+
             for(Environment env : service.getEnvironments()) {
                 env.setVariables(env.getVariables());
             }
 
             return ResponseEntity.ok(service);
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when getting service");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Service retrieval failed - runtime exception"));
         } catch (Exception ex) {
-            LOGGER.error("Service retrieval failed");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Service retrieval failed"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -122,20 +139,23 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to view this service");
+            }//Integration function end: Auth
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
             environment.setVariables(environment.getVariables());
 
             return ResponseEntity.ok(environment);
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when getting environment");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Environment retrieval failed - runtime exception"));
         } catch (Exception ex) {
-            LOGGER.error("Environment retrieval failed");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Environment retrieval failed"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -147,17 +167,20 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to view this service");
+            }//Integration function end: Auth
+
             List<Variable> variables = variableRepository.findByEnvironmentServiceId(service.getId());
 
             return ResponseEntity.ok(variables);
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when getting variables by service");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Retrieval of variables by service failed - runtime exception"));
         } catch (Exception ex) {
-            LOGGER.error("Retrieval of variables by service failed");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Retrieval of variables by service failed"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -169,20 +192,23 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to view this service");
+            }//Integration function end: Auth
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
             List<Variable> variables = variableRepository.findByEnvironmentId(environment.getId());
 
             return ResponseEntity.ok(variables);
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when getting variables by environment");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Retrieval of variables by environment failed - runtime exception"));
         } catch (Exception ex) {
-            LOGGER.error("Retrieval of variables by environment failed");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Retrieval of variables by environment failed"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -193,6 +219,14 @@ public class VaultService {
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to view this service");
+            }//Integration function end: Auth
 
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
@@ -205,14 +239,9 @@ public class VaultService {
             variable.setValue(variable.getValue());
 
             return ResponseEntity.ok(new VariableResponse(variable));
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when getting variable by name");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Retrieval of variable by name failed - runtime exception"));
         } catch (Exception ex) {
-            LOGGER.error("Unable to get variable by name");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Retrieval of variable by name failed"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -223,6 +252,14 @@ public class VaultService {
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to this service");
+            }//Integration function end: Auth
 
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
@@ -244,14 +281,9 @@ public class VaultService {
             variableRepository.save(variable);
 
             return ResponseEntity.ok(variable);
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when adding variable");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Unable to add variable - runtime exception"));
         } catch (Exception ex) {
-            LOGGER.error("Exception when attempting to add variable");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Unable to add variable"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -262,6 +294,14 @@ public class VaultService {
         try {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to this service");
+            }//Integration function end: Auth
 
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
@@ -322,11 +362,10 @@ public class VaultService {
         } catch (NullPointerException ex) {
             LOGGER.error("NPE - Invalid file extension");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("File upload failed"));
+            return ResponseEntity.status(400).body(new ErrorResponse("Invalid file extension"));
         } catch (Exception ex) {
-            LOGGER.error("Unexpected error processing env file");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(500).body(new ErrorResponse("Failed to process env file"));
+            return ResponseEntity.status(500).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -337,6 +376,14 @@ public class VaultService {
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to this service");
+            }//Integration function end: Auth
 
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
@@ -360,14 +407,9 @@ public class VaultService {
                     .contentType(MediaType.TEXT_PLAIN)
                     .contentLength(envBytes.length)
                     .body(resource);
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when downloading env file");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("File download failed"));
         } catch (Exception ex) {
-            LOGGER.error("Unexpected error downloading env file");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(500).body(new ErrorResponse("Failed to download .env file"));
+            return ResponseEntity.status(500).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -379,6 +421,14 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to this service");
+            }//Integration function end: Auth
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -389,14 +439,9 @@ public class VaultService {
 
             LOGGER.info("Variable successfully deleted");
             return ResponseEntity.ok("Variable successfully deleted");
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when deleting variable");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Variable deletion failed"));
         } catch (Exception ex) {
-            LOGGER.error("Unable to delete variable");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete variable"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -408,6 +453,14 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service and has the OWNER or MAINTAINER role
+            if (requestingUser == null || (requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER)) {
+                throw new RuntimeException("Only service users with OWNER or MANAGER roles can delete environments");
+            }//Integration function end: Auth
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -415,14 +468,9 @@ public class VaultService {
 
             LOGGER.info("Environment successfully deleted");
             return ResponseEntity.ok("Environment successfully deleted");
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when deleting environment");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Environment deletion failed"));
         } catch (Exception ex) {
-            LOGGER.error("Unable to delete environment");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete environment"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
@@ -434,18 +482,102 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service and has the OWNER
+            if (requestingUser == null || requestingUser.getRole() != ServiceUserRole.OWNER) {
+                throw new RuntimeException("Only service users with OWNER role can delete services");
+            }//Integration function end: Auth
+
             serviceRepository.delete(service);
 
             LOGGER.info("Service successfully deleted");
             return ResponseEntity.ok("Service successfully deleted");
-        } catch (RuntimeException runtimeException) {
-            LOGGER.error("Runtime exception when attempting to delete service");
-            LOGGER.error(runtimeException.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Service deletion failed"));
         } catch (Exception ex) {
-            LOGGER.error("Unable to delete service");
             LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Unable to delete service"));
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
+
+    // Integration function start: Auth
+    @Transactional
+    public ResponseEntity<?> addUserToService(ServiceUserRequest serviceUserRequest) {
+        LOGGER.info("Attempting to add user to service");
+
+        try {
+            Service service = serviceRepository.findByName(serviceUserRequest.getServiceName())
+                    .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
+
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service and has the OWNER
+            if (requestingUser == null || requestingUser.getRole() != ServiceUserRole.OWNER) {
+                throw new RuntimeException("Only service users with OWNER role can add users to services");
+            }
+
+            // Avoid duplicate users
+            if(serviceUserRepository.findByUserIdAndServiceId(serviceUserRequest.getUserId(), service.getId()) != null) {
+                throw new RuntimeException("User is already part of this service");
+            }
+
+            service.addUser(new ServiceUser(service, serviceUserRequest.getUserId(), serviceUserRequest.getRole()));
+
+            serviceRepository.save(service);
+
+            LOGGER.info("User successfully added to service");
+            return ResponseEntity.ok("User successfully added to service");
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
+    @Transactional(readOnly = false)
+    public ResponseEntity<?> deleteUserFromService(ServiceUserRequest serviceUserRequest) {
+        LOGGER.info("Attempting to delete user from service");
+
+        try {
+            Service service = serviceRepository.findByName(serviceUserRequest.getServiceName())
+                    .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
+
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Check if the user making the request belongs to the service
+            if (requestingUser == null) {
+                throw new RuntimeException("Requesting user does not have access to this service");
+            }
+
+            ServiceUser targetUser = serviceUserRepository.findByUserIdAndServiceId(serviceUserRequest.getUserId(), service.getId());
+
+            // Check if the target user of the request belongs to the service
+            if (targetUser == null) {
+                throw new RuntimeException("Target user is not part of this service.");
+            }
+
+            // Check if the requesting user is either attempting to remove themself or is an OWNER
+            if(!requestingUser.getUserId().equals(targetUser.getUserId()) || requestingUser.getRole() != ServiceUserRole.OWNER) {
+                throw new RuntimeException("Only OWNER users can remove others");
+            }
+
+            // If the target user has an OWNER role, we must ensure that we're not removing the last OWNER from the service
+            if(targetUser.getRole() == ServiceUserRole.OWNER) {
+                long ownerCount = service.getServiceUsers().stream()
+                        .filter(su -> su.getRole() == ServiceUserRole.OWNER)
+                        .count();
+
+                if (ownerCount <= 1) {
+                    throw new RuntimeException("Cannot remove the last OWNER from the service.");
+                }
+            }
+
+            serviceUserRepository.deleteServiceUser(serviceUserRequest.getUserId(), service.getId());
+
+            LOGGER.info("User successfully deleted from service");
+            return ResponseEntity.ok("User successfully deleted from service");
+        } catch(RuntimeException ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }// Integration function end: Auth
 }
