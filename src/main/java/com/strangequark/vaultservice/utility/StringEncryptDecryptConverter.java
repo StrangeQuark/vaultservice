@@ -8,25 +8,25 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Converter(autoApply = false)
-public class EncryptDecryptConverter implements AttributeConverter<String, String> {
+public class StringEncryptDecryptConverter implements AttributeConverter<String, String> {
 
-    private static EncryptionUtility encryptionUtility;
+    private static EncryptionService encryptionService;
 
     @Autowired
-    private EncryptionUtility injectedEncryptionService;
+    private EncryptionService injectedEncryptionService;
 
     @PostConstruct
     public void init() {
-        encryptionUtility = injectedEncryptionService;
+        encryptionService = injectedEncryptionService;
     }
 
     @Override
     public String convertToDatabaseColumn(String attribute) {
-        return attribute == null ? null : encryptionUtility.encrypt(attribute);
+        return attribute == null ? null : encryptionService.encrypt(attribute);
     }
 
     @Override
     public String convertToEntityAttribute(String dbData) {
-        return dbData == null ? null : encryptionUtility.decrypt(dbData);
+        return dbData == null ? null : encryptionService.decrypt(dbData);
     }
 }

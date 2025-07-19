@@ -64,6 +64,14 @@ public class VaultController {
         return vaultService.addVariable(serviceName, environmentName, variable);
     }
 
+    @PostMapping("/update-variable/{serviceName}/{environmentName}")
+    public ResponseEntity<?> updateVariable(
+            @PathVariable String serviceName,
+            @PathVariable String environmentName,
+            @RequestBody Variable variable) {
+        return vaultService.updateVariable(serviceName, environmentName, variable);
+    }
+
     @PostMapping("/add-env-file/{serviceName}/{environmentName}")
     public ResponseEntity<?> addEnvFile(
             @PathVariable String serviceName,

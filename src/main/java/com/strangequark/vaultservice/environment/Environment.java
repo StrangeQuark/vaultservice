@@ -3,7 +3,8 @@ package com.strangequark.vaultservice.environment;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.strangequark.vaultservice.service.Service;
-import com.strangequark.vaultservice.utility.EncryptDecryptConverter;
+import com.strangequark.vaultservice.utility.LocalDateTimeEncryptDecryptConverter;
+import com.strangequark.vaultservice.utility.StringEncryptDecryptConverter;
 import com.strangequark.vaultservice.variable.Variable;
 
 import jakarta.persistence.*;
@@ -39,13 +40,15 @@ public class Environment {
     private Service service;
 
     @Column(nullable = false)
-    @Convert(converter = EncryptDecryptConverter.class)
+    @Convert(converter = StringEncryptDecryptConverter.class)
     private String name;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "environment", cascade = CascadeType.ALL, orphanRemoval = true)
