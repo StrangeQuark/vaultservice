@@ -4,6 +4,7 @@ package com.strangequark.vaultservice.serviceuser;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.strangequark.vaultservice.service.Service;
+import com.strangequark.vaultservice.utility.RoleEncryptDecryptConverter;
 import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 
@@ -35,6 +36,7 @@ public class ServiceUser {
     private UUID userId;
 
     @Enumerated(EnumType.STRING)
+    @Convert(converter = RoleEncryptDecryptConverter.class)
     private ServiceUserRole role;
 
     public UUID getId() {
