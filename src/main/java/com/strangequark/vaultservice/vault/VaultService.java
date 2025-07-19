@@ -120,10 +120,6 @@ public class VaultService {
                 throw new RuntimeException("You do not have access to view this service");
             }//Integration function end: Auth
 
-            for(Environment env : service.getEnvironments()) {
-                env.setVariables(env.getVariables());
-            }
-
             return ResponseEntity.ok(service);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
@@ -149,8 +145,6 @@ public class VaultService {
 
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
-
-            environment.setVariables(environment.getVariables());
 
             return ResponseEntity.ok(environment);
         } catch (Exception ex) {
@@ -234,10 +228,6 @@ public class VaultService {
             Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
-            //Decrypt the variables key/value pair
-            variable.setKey(variable.getKey());
-            variable.setValue(variable.getValue());
-
             return ResponseEntity.ok(new VariableResponse(variable));
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
@@ -265,22 +255,49 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
             //Ensure the variable name doesn't already exist
-            for(Variable var : environment.getVariables()) {
-                if(var.getKey().equals(variable.getKey())) {
-                    LOGGER.error("Variable with that key already exists in this service/environment");
-                    return ResponseEntity.status(400).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
-                }
+            if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), variable.getKey()).isPresent()) {
+                LOGGER.error("Variable with that key already exists in this service/environment");
+                return ResponseEntity.status(400).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
             }
 
             variable.setEnvironment(environment);
-
-            //Encrypt the variables key/value pair
-            variable.setKey(variable.getKey());
-            variable.setValue(variable.getValue());
-
+            variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(variable);
 
             return ResponseEntity.ok(variable);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<?> updateVariable(String serviceName, String environmentName, Variable variable) {
+        try {
+            LOGGER.info("Attempting to update variable");
+
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId());
+
+            // Ensure that the request user has access to this service
+            if (requestingUser == null) {
+                throw new RuntimeException("You do not have access to this service");
+            }//Integration function end: Auth
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
+                    .orElseThrow(() -> new RuntimeException("Environment not found"));
+
+            Variable var = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variable.getKey())
+                    .orElseThrow(() -> new RuntimeException("Variable not found"));
+
+            var.setValue(variable.getValue());
+            var.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
+            variableRepository.save(var);
+
+            return ResponseEntity.ok(var);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
@@ -352,7 +369,7 @@ public class VaultService {
                 variable.setEnvironment(environment);
                 variable.setKey(key);
                 variable.setValue(value);
-
+                variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
                 variableRepository.save(variable);
                 added++;
             }
