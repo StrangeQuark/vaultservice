@@ -4,7 +4,7 @@ import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceRepository;
-import com.strangequark.vaultservice.utility.EncryptionUtility;
+import com.strangequark.vaultservice.utility.EncryptionService;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRepository;
 import com.strangequark.vaultservice.vault.VaultService;
@@ -29,7 +29,7 @@ public abstract class BaseServiceTest {
     @Autowired
     public VaultService vaultService;
     @Autowired
-    public EncryptionUtility encryptionUtility;
+    public EncryptionService encryptionService;
 
     public Service testService;
     public Environment testEnvironment;
@@ -40,7 +40,7 @@ public abstract class BaseServiceTest {
         try {
             testService = new Service("testService");
             testEnvironment = new Environment(testService, "testEnvironment");
-            testVariable = new Variable(testEnvironment, encryptionUtility.encrypt("testKey"), encryptionUtility.encrypt("testValue"));
+            testVariable = new Variable(testEnvironment, encryptionService.encrypt("testKey"), encryptionService.encrypt("testValue"));
 
             serviceRepository.save(testService);
             environmentRepository.save(testEnvironment);

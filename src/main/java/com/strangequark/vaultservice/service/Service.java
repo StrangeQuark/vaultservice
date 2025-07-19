@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.strangequark.vaultservice.environment.Environment;
 
 import com.strangequark.vaultservice.serviceuser.ServiceUser;
-import com.strangequark.vaultservice.utility.EncryptDecryptConverter;
+import com.strangequark.vaultservice.utility.LocalDateTimeEncryptDecryptConverter;
+import com.strangequark.vaultservice.utility.StringEncryptDecryptConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,13 +34,15 @@ public class Service {
     private UUID id;
 
     @Column(unique = true, nullable = false)
-    @Convert(converter = EncryptDecryptConverter.class)
+    @Convert(converter = StringEncryptDecryptConverter.class)
     private String name;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true)

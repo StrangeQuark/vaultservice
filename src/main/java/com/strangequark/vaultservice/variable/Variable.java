@@ -3,7 +3,8 @@ package com.strangequark.vaultservice.variable;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.strangequark.vaultservice.environment.Environment;
 
-import com.strangequark.vaultservice.utility.EncryptDecryptConverter;
+import com.strangequark.vaultservice.utility.LocalDateTimeEncryptDecryptConverter;
+import com.strangequark.vaultservice.utility.StringEncryptDecryptConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -32,18 +33,31 @@ public class Variable {
     private Environment environment;
 
     @Column(name = "var_key", nullable = false)
-    @Convert(converter = EncryptDecryptConverter.class)
+    @Convert(converter = StringEncryptDecryptConverter.class)
     private String key;
 
     @Column(name = "var_value")
-    @Convert(converter = EncryptDecryptConverter.class)
+    @Convert(converter = StringEncryptDecryptConverter.class)
     private String value;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime updatedAt;
+
+    @Column(name = "last_updated_by")// Integration function start: Auth
+    private UUID lastUpdatedBy;
+
+    public UUID getLastUpdatedBy() {
+        return lastUpdatedBy;
+    }
+
+    public void setLastUpdatedBy(UUID lastUpdatedBy) {
+        this.lastUpdatedBy = lastUpdatedBy;
+    }// Integration function end: Auth
 
     @PrePersist
     protected void onCreate() {
