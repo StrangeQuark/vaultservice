@@ -2,20 +2,18 @@
 
 package com.strangequark.vaultservice.serviceuser;
 
-import java.util.UUID;
-
 public class ServiceUserRequest {
     private String serviceName;
-    private UUID userId;
+    private String username;
     private ServiceUserRole role;
 
     public ServiceUserRequest() {
 
     }
 
-    public ServiceUserRequest(String serviceName, UUID userId, ServiceUserRole role) {
+    public ServiceUserRequest(String serviceName, String username, ServiceUserRole role) {
         this.serviceName = serviceName;
-        this.userId = userId;
+        this.username = username;
         this.role = role;
     }
 
@@ -28,12 +26,12 @@ public class ServiceUserRequest {
         this.serviceName = serviceName;
     }
 
-    public UUID getUserId() {
-        return userId;
+    public String getUsername() {
+        return username;
     }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public ServiceUserRole getRole() {

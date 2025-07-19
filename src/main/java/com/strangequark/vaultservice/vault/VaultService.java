@@ -3,10 +3,11 @@ package com.strangequark.vaultservice.vault;
 import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.error.ErrorResponse;
 import com.strangequark.vaultservice.service.Service;
-import com.strangequark.vaultservice.serviceuser.ServiceUser;
-import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;
-import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;
-import com.strangequark.vaultservice.serviceuser.ServiceUserRole;
+import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
+import com.strangequark.vaultservice.utility.AuthUtility;
 import com.strangequark.vaultservice.utility.JwtUtility;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
@@ -45,7 +46,9 @@ public class VaultService {
     @Autowired// Integration function start: Auth
     private ServiceUserRepository serviceUserRepository;
     @Autowired
-    JwtUtility jwtUtility;// Integration function end: Auth
+    JwtUtility jwtUtility;
+    @Autowired
+    AuthUtility authUtility;// Integration function end: Auth
 
     @Transactional
     public ResponseEntity<?> createService(String serviceName) {
@@ -533,12 +536,19 @@ public class VaultService {
                 throw new RuntimeException("Only service users with OWNER role can add users to services");
             }
 
+            // Ensure the target user exists
+            String userIdStr = authUtility.getUserId(serviceUserRequest.getUsername());
+            if (userIdStr == null) {
+                throw new RuntimeException("Unable to retrieve user id");
+            }
+            UUID userId = UUID.fromString(userIdStr);
+
             // Avoid duplicate users
-            if(serviceUserRepository.findByUserIdAndServiceId(serviceUserRequest.getUserId(), service.getId()) != null) {
+            if(serviceUserRepository.findByUserIdAndServiceId(userId, service.getId()) != null) {
                 throw new RuntimeException("User is already part of this service");
             }
 
-            service.addUser(new ServiceUser(service, serviceUserRequest.getUserId(), serviceUserRequest.getRole()));
+            service.addUser(new ServiceUser(service, userId, serviceUserRequest.getRole()));
 
             serviceRepository.save(service);
 
@@ -565,14 +575,21 @@ public class VaultService {
                 throw new RuntimeException("Requesting user does not have access to this service");
             }
 
-            ServiceUser targetUser = serviceUserRepository.findByUserIdAndServiceId(serviceUserRequest.getUserId(), service.getId());
+            // Ensure the target user exists
+            String userIdStr = authUtility.getUserId(serviceUserRequest.getUsername());
+            if (userIdStr == null) {
+                throw new RuntimeException("Unable to retrieve user id");
+            }
+            UUID userId = UUID.fromString(userIdStr);
+
+            ServiceUser targetUser = serviceUserRepository.findByUserIdAndServiceId(userId, service.getId());
 
             // Check if the target user of the request belongs to the service
             if (targetUser == null) {
                 throw new RuntimeException("Target user is not part of this service.");
             }
 
-            // Check if the requesting user is either attempting to remove themself or is an OWNER
+            // Check if the requesting user is either attempting to remove self or is an OWNER
             if(!requestingUser.getUserId().equals(targetUser.getUserId()) || requestingUser.getRole() != ServiceUserRole.OWNER) {
                 throw new RuntimeException("Only OWNER users can remove others");
             }
@@ -588,7 +605,7 @@ public class VaultService {
                 }
             }
 
-            serviceUserRepository.deleteServiceUser(serviceUserRequest.getUserId(), service.getId());
+            serviceUserRepository.deleteServiceUser(userId, service.getId());
 
             LOGGER.info("User successfully deleted from service");
             return ResponseEntity.ok("User successfully deleted from service");

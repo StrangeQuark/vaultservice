@@ -1,5 +1,6 @@
 package com.strangequark.vaultservice.vault;
 
+import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
 import com.strangequark.vaultservice.variable.Variable;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,4 +107,15 @@ public class VaultController {
     public ResponseEntity<?> deleteService(@PathVariable String serviceName) {
         return vaultService.deleteService(serviceName);
     }
+
+    // Integration function start: Auth
+    @PostMapping("/add-user-to-service")
+    public ResponseEntity<?> addUserToService(@RequestBody ServiceUserRequest serviceUserRequest) {
+        return vaultService.addUserToService(serviceUserRequest);
+    }
+
+    @PostMapping("/delete-user-from-service")
+    public ResponseEntity<?> deleteUserFromService(@RequestBody ServiceUserRequest serviceUserRequest) {
+        return vaultService.deleteUserFromService(serviceUserRequest);
+    }// Integration function end: Auth
 }
