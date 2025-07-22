@@ -2,24 +2,37 @@ package com.strangequark.vaultservice.utility;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 
-@Component
-public class EncryptionService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EncryptionService.class);
+public class EncryptionUtility {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EncryptionUtility.class);
 
-    private final String ALGORITHM = "AES";
+    private static final String ALGORITHM = "AES";
 
-    @Value("${ENCRYPTION_KEY}")
-    private String ENCRYPTION_KEY;
+    private static final String ENCRYPTION_KEY = resolveKey();
 
-    public String encrypt(String data) {
+    private static String resolveKey() {
+        LOGGER.info("Attempting to resolve encryption key");
+
+        String key = System.getProperty("ENCRYPTION_KEY");
+        if (key == null) {
+            LOGGER.info("Unable to grab from properties, attempt with environment variables");
+            key = System.getenv("ENCRYPTION_KEY");
+        }
+        if (key == null || key.length() != 32) {
+            LOGGER.error("ENCRYPTION_KEY must be set and 32 chars long");
+            throw new IllegalStateException("ENCRYPTION_KEY must be set and 32 chars long");
+        }
+
+        LOGGER.info("Encryption key successfully resolved");
+        return key;
+    }
+
+    public static String encrypt(String data) {
         try {
             LOGGER.info("Attempting to encrypt data");
 
@@ -36,7 +49,7 @@ public class EncryptionService {
         }
     }
 
-    public String decrypt(String data) {
+    public static String decrypt(String data) {
         try {
             LOGGER.info("Attempting to decrypt data");
             SecretKey key = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), ALGORITHM);
