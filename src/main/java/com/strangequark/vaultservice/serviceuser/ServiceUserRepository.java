@@ -9,10 +9,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ServiceUserRepository extends JpaRepository<ServiceUser, UUID> {
-    ServiceUser findByUserIdAndServiceId(UUID userId, UUID serviceId);
+    Optional<ServiceUser> findByUserIdAndServiceId(UUID userId, UUID serviceId);
 
     @Query("SELECT su.service FROM ServiceUser su WHERE su.userId = :userId")
     List<Service> findServicesByUserId(UUID userId);
@@ -20,5 +21,5 @@ public interface ServiceUserRepository extends JpaRepository<ServiceUser, UUID> 
     @Modifying
     @Transactional
     @Query("DELETE ServiceUser su WHERE su.userId = :userId AND su.service.id = :serviceId")
-    void deleteServiceUser(UUID userId, UUID serviceId);
+    boolean deleteServiceUser(UUID userId, UUID serviceId);
 }
