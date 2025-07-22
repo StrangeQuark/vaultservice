@@ -35,7 +35,6 @@ public class ServiceUser {
 
     private UUID userId;
 
-    @Enumerated(EnumType.STRING)
     @Convert(converter = RoleEncryptDecryptConverter.class)
     private ServiceUserRole role;
 
