@@ -6,6 +6,7 @@ import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
 import com.strangequark.vaultservice.utility.AuthUtility;// Integration line: Auth
 import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Auth
@@ -24,7 +25,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;// Int
 
 import java.util.UUID;// Integration line: Auth
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.when;// Integration line: Auth
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -46,6 +47,7 @@ public abstract class BaseServiceTest {
     public JwtUtility jwtUtility;
     @MockitoBean
     public AuthUtility authUtility;
+    public UUID testOwnerId = UUID.randomUUID();
     public UUID testUserId = UUID.randomUUID();// Integration function end: Auth
 
 
@@ -73,9 +75,12 @@ public abstract class BaseServiceTest {
             variableRepository.save(testVariable);
 
             // Integration function start: Auth
-            ServiceUser serviceUser = new ServiceUser(testService, testUserId, ServiceUserRole.OWNER);
+            ServiceUser serviceUser = new ServiceUser(testService, testOwnerId, ServiceUserRole.OWNER);
             serviceUserRepository.save(serviceUser);
-            when(jwtUtility.extractId()).thenReturn(testUserId.toString());// Integration function end: Auth
+
+            // Mock authUtility functions
+            when(jwtUtility.extractId()).thenReturn(testOwnerId.toString());
+            when(authUtility.getUserId("testUser")).thenReturn(testUserId.toString());// Integration function end: Auth
         } catch (Exception ex) {
             ex.printStackTrace();
         }

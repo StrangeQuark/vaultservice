@@ -1,5 +1,8 @@
 package com.strangequark.vaultservice.servicetests;
 
+import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
 import com.strangequark.vaultservice.variable.Variable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -70,6 +73,15 @@ public class VaultServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void updateVariableTest() {
+        ResponseEntity<?> response = vaultService.updateVariable(testService.getName(), testEnvironment.getName(),
+                new Variable(testEnvironment, testVariable.getKey(), "newValue"));
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals("newValue", variableRepository.findByEnvironmentIdAndKey(testEnvironment.getId(), testVariable.getKey()).get().getValue());
+    }
+
+    @Test
     void addEnvFileTest() {
         String fileContent = "FOO=bar\nTEST=val1\n";
 
@@ -124,4 +136,34 @@ public class VaultServiceTest extends BaseServiceTest {
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(serviceRepository.findByName(testService.getName()).isEmpty());
     }
+
+    // Integration function start: Auth
+    @Test
+    void addUserToServiceTest() {
+        ServiceUserRequest serviceUserRequest = new ServiceUserRequest();
+        serviceUserRequest.setServiceName(testService.getName());
+        serviceUserRequest.setUsername("testUser");
+
+        ResponseEntity<?> response = vaultService.addUserToService(serviceUserRequest);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isPresent());
+    }
+
+    @Test
+    void deleteUserFromServiceTest() {
+        serviceUserRepository.save(new ServiceUser(testService, testUserId, ServiceUserRole.MAINTAINER));
+
+        Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isPresent());
+
+        ServiceUserRequest serviceUserRequest = new ServiceUserRequest();
+        serviceUserRequest.setServiceName(testService.getName());
+        serviceUserRequest.setUsername("testUser");
+
+        ResponseEntity<?> response = vaultService.deleteUserFromService(serviceUserRequest);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isEmpty());
+    }
+    // Integration function end: Auth
 }

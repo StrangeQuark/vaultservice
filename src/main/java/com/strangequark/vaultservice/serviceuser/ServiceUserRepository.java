@@ -21,5 +21,5 @@ public interface ServiceUserRepository extends JpaRepository<ServiceUser, UUID> 
     @Modifying
     @Transactional
     @Query("DELETE ServiceUser su WHERE su.userId = :userId AND su.service.id = :serviceId")
-    boolean deleteServiceUser(UUID userId, UUID serviceId);
+    int deleteServiceUser(UUID userId, UUID serviceId);
 }
