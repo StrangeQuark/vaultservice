@@ -546,7 +546,7 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Target user is not part of this service"));
 
             // Check if the requesting user is either attempting to remove self or is an OWNER
-            if(!requestingUser.getUserId().equals(targetUser.getUserId()) || requestingUser.getRole() != ServiceUserRole.OWNER) {
+            if(!requestingUser.getUserId().equals(targetUser.getUserId()) && requestingUser.getRole() != ServiceUserRole.OWNER) {
                 throw new RuntimeException("Only OWNER users can remove others");
             }
 
@@ -561,9 +561,9 @@ public class VaultService {
                 }
             }
 
-            boolean deleted = serviceUserRepository.deleteServiceUser(userId, service.getId());
+            int deletedCount = serviceUserRepository.deleteServiceUser(userId, service.getId());
 
-            if(!deleted)
+            if(deletedCount == 0)
                 throw new RuntimeException("User was not successfully deleted from service");
 
             LOGGER.info("User successfully deleted from service");
