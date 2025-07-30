@@ -2,21 +2,33 @@ pipeline {
     agent { label 'Host PC' }
 
     stages {
-//         stage("Retrieve Env Vars") {
-//             steps {
-//                 withCredentials([file(credentialsId: 'vault-env', variable: 'ENV_FILE')]) {
-//                     script {
-//                         bat "copy %ENV_FILE% .env"
-//                     }
-//                 }
-//             }
-//         }
+        // Because the vault service cannot request secrets from itself upon start up without extensive initialization
+        // need from the user, it is required to establish these credentials in Jenkins before start up
+        //
+        // To do this:
+        // - Navigate to localhost:6080/manage/credentials
+        // - Click (global) -> Add credentials
+        // - Kind: Secret file
+        // - Scope: Global
+        // - Choose your .env file
+        // - ID: vault-env
+        stage("Retrieve Env Vars") {
+            steps {
+                withCredentials([file(credentialsId: 'vault-env', variable: 'ENV_FILE')]) {
+                    script {
+                        sh "cp \"$ENV_FILE\" .env"
+//                         bat "copy %ENV_FILE% .env" // For windows runs
+                    }
+                }
+            }
+        }
 
         stage("Deploy & Health Check") {
             steps {
                 script {
                     try {
-                        bat "docker-compose up --build -d"
+                        sh "docker-compose up --build -d"
+//                         bat "docker-compose up --build -d" // For windows runs
 
                         def maxRetries = 4 * 10
                         def retryInterval = 15
@@ -40,13 +52,15 @@ pipeline {
 
                         if (!success) {
                             echo "Health check ultimately failed. Tearing down containers."
-                            bat "docker-compose down"
+                            sh "docker-compose down"
+//                             bat "docker-compose down" // For windows runs
                             error("Deployment failed: service not healthy.")
                         }
 
                     } catch (ex) {
                         echo "Unexpected failure: ${ex.getMessage()}"
-                        bat "docker-compose down"
+                        sh "docker-compose down"
+//                         bat "docker-compose down" // For windows runs
                         error("Deployment crashed.")
                     }
                 }
