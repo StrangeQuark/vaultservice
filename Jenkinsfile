@@ -2,15 +2,25 @@ pipeline {
     agent { label 'Host PC' }
 
     stages {
-//         stage("Retrieve Env Vars") {
-//             steps {
-//                 withCredentials([file(credentialsId: 'vault-env', variable: 'ENV_FILE')]) {
-//                     script {
-//                         bat "copy %ENV_FILE% .env"
-//                     }
-//                 }
-//             }
-//         }
+        // Because the vault service cannot request secrets from itself upon start up without extensive initialization
+        // need from the user, it is required to establish these credentials in Jenkins before start up
+        //
+        // To do this:
+        // - Navigate to localhost:6080/manage/credentials
+        // - Click (global) -> Add credentials
+        // - Kind: Secret file
+        // - Scope: Global
+        // - Choose your .env file
+        // - ID: vault-env
+        stage("Retrieve Env Vars") {
+            steps {
+                withCredentials([file(credentialsId: 'vault-env', variable: 'ENV_FILE')]) {
+                    script {
+                        bat "copy %ENV_FILE% .env"
+                    }
+                }
+            }
+        }
 
         stage("Deploy & Health Check") {
             steps {
