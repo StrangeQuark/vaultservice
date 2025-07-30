@@ -38,7 +38,7 @@ pipeline {
                             try {
                                 echo "Health check attempt ${i + 1}..."
                                 def healthResponse = httpRequest(
-                                    url: 'https://localhost:6020/api/vault/health',
+                                    url: 'http://localhost:6020/api/vault/health',
                                     validResponseCodes: '200'
                                 )
                                 echo "App is healthy: ${healthResponse.status}"
