@@ -8,6 +8,27 @@
 	},
 	"item": [
 		{
+			"name": "Healthcheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6020/api/vault/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Create Service",
 			"request": {
 				"auth": {
