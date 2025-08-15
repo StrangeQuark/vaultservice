@@ -30,6 +30,11 @@ public class VaultController {
         return vaultService.getService(serviceName);
     }
 
+    @GetMapping("/get-environments-by-service/{serviceName}")
+    public ResponseEntity<?> getEnvironmentsByService(@PathVariable String serviceName) {
+        return vaultService.getEnvironmentsByService(serviceName);
+    }
+
     @GetMapping("/get-environment/{serviceName}/{environmentName}")
     public ResponseEntity<?> getEnvironment(
             @PathVariable String serviceName,
@@ -109,6 +114,11 @@ public class VaultController {
     }
 
     // Integration function start: Auth
+    @GetMapping("/get-all-services")
+    public ResponseEntity<?> getAllServices() {
+        return vaultService.getAllServices();
+    }
+
     @PostMapping("/add-user-to-service")
     public ResponseEntity<?> addUserToService(@RequestBody ServiceUserRequest serviceUserRequest) {
         return vaultService.addUserToService(serviceUserRequest);

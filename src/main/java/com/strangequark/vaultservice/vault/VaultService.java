@@ -27,10 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
@@ -121,6 +118,35 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
 
             return ResponseEntity.ok(service);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getEnvironmentsByService(String serviceName) {
+        try {
+            LOGGER.info("Attempting to get environments by service");
+
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            //Integration function start: Auth
+            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
+
+            List<Environment> environments = environmentRepository.findAllByServiceId(service.getId());
+
+            if(environments.isEmpty())
+                throw new RuntimeException("Environments list is empty");
+
+            List<String> environmentNames = new ArrayList<>();
+            for(Environment env : environments)
+                environmentNames.add(env.getName());
+
+            LOGGER.info("Successfully retrieved all environments by service");
+            return ResponseEntity.ok(environmentNames);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
@@ -484,6 +510,28 @@ public class VaultService {
     }
 
     // Integration function start: Auth
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getAllServices() {
+        LOGGER.info("Attempting to get all services for user");
+
+        try {
+            List<Service> services = serviceUserRepository.findServicesByUserId(UUID.fromString(jwtUtility.extractId()));
+
+            if(services.isEmpty())
+                throw new RuntimeException("User services list is empty");
+
+            List<String> serviceNames = new ArrayList<>();
+            for(Service service : services)
+                serviceNames.add(service.getName());
+
+            LOGGER.info("Service retrieval successful");
+            return ResponseEntity.ok(serviceNames);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
     @Transactional
     public ResponseEntity<?> addUserToService(ServiceUserRequest serviceUserRequest) {
         LOGGER.info("Attempting to add user to service");
