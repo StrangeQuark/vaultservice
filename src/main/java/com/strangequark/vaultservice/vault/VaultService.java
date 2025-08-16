@@ -517,9 +517,6 @@ public class VaultService {
         try {
             List<Service> services = serviceUserRepository.findServicesByUserId(UUID.fromString(jwtUtility.extractId()));
 
-            if(services.isEmpty())
-                throw new RuntimeException("User services list is empty");
-
             List<String> serviceNames = new ArrayList<>();
             for(Service service : services)
                 serviceNames.add(service.getName());
