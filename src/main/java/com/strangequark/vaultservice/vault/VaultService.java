@@ -138,9 +138,6 @@ public class VaultService {
 
             List<Environment> environments = environmentRepository.findAllByServiceId(service.getId());
 
-            if(environments.isEmpty())
-                throw new RuntimeException("Environments list is empty");
-
             List<String> environmentNames = new ArrayList<>();
             for(Environment env : environments)
                 environmentNames.add(env.getName());
