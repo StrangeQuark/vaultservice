@@ -304,6 +304,43 @@ public class VaultService {
     }
 
     @Transactional
+    public ResponseEntity<?> updateVariables(String serviceName, String environmentName, List<Variable> variables) {
+        try {
+            LOGGER.info("Attempting to update list of variables");
+
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            //Integration function start: Auth
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
+                    .orElseThrow(() -> new RuntimeException("Environment not found"));
+
+            List<String> skippedVars = new ArrayList<>();
+
+            for(Variable var : variables) {
+                if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), var.getKey()).isEmpty()) {
+                    skippedVars.add(var.getKey());
+                    continue;
+                }
+
+                Variable v = variableRepository.findByEnvironmentIdAndKey(environment.getId(), var.getKey()).get();
+
+                v.setValue(var.getValue());
+                v.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
+                variableRepository.save(v);
+            }
+
+            return skippedVars.isEmpty() ? ResponseEntity.ok("All variables updated successfully") : ResponseEntity.ok("Skipped variables: " + skippedVars);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
+    @Transactional
     public ResponseEntity<?> addEnvFile(String serviceName, String environmentName, MultipartFile file) {
         LOGGER.info("Attempting to upload env file");
 

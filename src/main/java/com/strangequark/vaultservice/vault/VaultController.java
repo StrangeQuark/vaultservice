@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/vault")
 public class VaultController {
@@ -76,6 +78,14 @@ public class VaultController {
             @PathVariable String environmentName,
             @RequestBody Variable variable) {
         return vaultService.updateVariable(serviceName, environmentName, variable);
+    }
+
+    @PostMapping("/update-variables/{serviceName}/{environmentName}")
+    public ResponseEntity<?> updateVariables(
+            @PathVariable String serviceName,
+            @PathVariable String environmentName,
+            @RequestBody List<Variable> variables) {
+        return vaultService.updateVariables(serviceName, environmentName, variables);
     }
 
     @PostMapping("/add-env-file/{serviceName}/{environmentName}")
