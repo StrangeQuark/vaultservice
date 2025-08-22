@@ -563,6 +563,24 @@ public class VaultService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getUsersByService(String serviceName) {
+        LOGGER.info("Attempting to get all users for service");
+
+        try {
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            List<ServiceUser> users = serviceUserRepository.findAllByServiceId(service.getId());
+
+            LOGGER.info("User list retrieval successful");
+            return ResponseEntity.ok(users);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
     @Transactional
     public ResponseEntity<?> addUserToService(ServiceUserRequest serviceUserRequest) {
         LOGGER.info("Attempting to add user to service");

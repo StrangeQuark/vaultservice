@@ -129,6 +129,11 @@ public class VaultController {
         return vaultService.getAllServices();
     }
 
+    @GetMapping("/get-users-by-service/{serviceName}")
+    public ResponseEntity<?> getUsersByService(@PathVariable String serviceName) {
+        return vaultService.getUsersByService(serviceName);
+    }
+
     @PostMapping("/add-user-to-service")
     public ResponseEntity<?> addUserToService(@RequestBody ServiceUserRequest serviceUserRequest) {
         return vaultService.addUserToService(serviceUserRequest);

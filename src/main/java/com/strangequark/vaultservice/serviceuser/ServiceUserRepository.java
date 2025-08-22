@@ -18,6 +18,8 @@ public interface ServiceUserRepository extends JpaRepository<ServiceUser, UUID> 
     @Query("SELECT su.service FROM ServiceUser su WHERE su.userId = :userId")
     List<Service> findServicesByUserId(UUID userId);
 
+    List<ServiceUser> findAllByServiceId(UUID serviceId);
+
     @Modifying
     @Transactional
     @Query("DELETE ServiceUser su WHERE su.userId = :userId AND su.service.id = :serviceId")
