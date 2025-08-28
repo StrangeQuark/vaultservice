@@ -604,6 +604,11 @@ public class VaultService {
                 throw new RuntimeException("Only service users with OWNER or MANAGER roles can update user roles");
             }
 
+            // Ensure only OWNER users can promote other users to OWNER
+            if (serviceUserRequest.getRole() == ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.OWNER) {
+                throw new RuntimeException("Only OWNERs can promote other users to OWNER");
+            }
+
             // Ensure the target user exists
             String userIdStr = authUtility.getUserId(serviceUserRequest.getUsername());
             if (userIdStr == null) {
