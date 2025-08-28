@@ -134,6 +134,16 @@ public class VaultController {
         return vaultService.getUsersByService(serviceName);
     }
 
+    @GetMapping("/get-all-roles")
+    public ResponseEntity<?> getAllRoles() {
+        return vaultService.getAllRoles();
+    }
+
+    @PostMapping("/update-user-role")
+    public ResponseEntity<?> updateUserRole(@RequestBody ServiceUserRequest serviceUserRequest) {
+        return vaultService.updateUserRole(serviceUserRequest);
+    }
+
     @PostMapping("/add-user-to-service")
     public ResponseEntity<?> addUserToService(@RequestBody ServiceUserRequest serviceUserRequest) {
         return vaultService.addUserToService(serviceUserRequest);
