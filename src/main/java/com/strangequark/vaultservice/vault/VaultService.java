@@ -581,6 +581,67 @@ public class VaultService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getAllRoles() {
+        LOGGER.info("Attempting to get all roles");
+
+        return ResponseEntity.ok(ServiceUserRole.values());
+    }
+
+    @Transactional
+    public ResponseEntity<?> updateUserRole(ServiceUserRequest serviceUserRequest) {
+        LOGGER.info("Attempting to update user's role");
+
+        try {
+            Service service = serviceRepository.findByName(serviceUserRequest.getServiceName())
+                    .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
+
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+
+            // Ensure that the request user has the OWNER or MANAGER role
+            if (requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER) {
+                throw new RuntimeException("Only service users with OWNER or MANAGER roles can update user roles");
+            }
+
+            // Ensure the target user exists
+            String userIdStr = authUtility.getUserId(serviceUserRequest.getUsername());
+            if (userIdStr == null) {
+                throw new RuntimeException("Unable to retrieve user id");
+            }
+            UUID userId = UUID.fromString(userIdStr);
+
+            ServiceUser targetUser = serviceUserRepository.findByUserIdAndServiceId(userId, service.getId())
+                    .orElseThrow(() -> new RuntimeException("Target user is not part of this service"));
+
+            // If the target user is OWNER, requesting user must also be OWNER
+            if(targetUser.getRole() == ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.OWNER) {
+                throw new RuntimeException("Only OWNERs can change the roles of other OWNERs");
+            }
+
+            // If the target user has an OWNER role, we must ensure that we're not removing the last OWNER from the service
+            if(targetUser.getRole() == ServiceUserRole.OWNER) {
+                long ownerCount = service.getServiceUsers().stream()
+                        .filter(su -> su.getRole() == ServiceUserRole.OWNER)
+                        .count();
+
+                if (ownerCount <= 1) {
+                    throw new RuntimeException("Cannot remove the last OWNER from the service.");
+                }
+            }
+
+            //Update the target user's role
+            targetUser.setRole(serviceUserRequest.getRole());
+            serviceUserRepository.save(targetUser);
+
+            LOGGER.info("User role successfully updated");
+            return ResponseEntity.ok("User role successfully updated");
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
     @Transactional
     public ResponseEntity<?> addUserToService(ServiceUserRequest serviceUserRequest) {
         LOGGER.info("Attempting to add user to service");
