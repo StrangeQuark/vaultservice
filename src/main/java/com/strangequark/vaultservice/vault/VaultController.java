@@ -139,6 +139,11 @@ public class VaultController {
         return vaultService.getAllRoles();
     }
 
+    @GetMapping("/get-current-user-role")
+    public ResponseEntity<?> getCurrentUserRole(ServiceUserRequest serviceUserRequest) {
+        return vaultService.getCurrentUserRole(serviceUserRequest);
+    }
+
     @PostMapping("/update-user-role")
     public ResponseEntity<?> updateUserRole(@RequestBody ServiceUserRequest serviceUserRequest) {
         return vaultService.updateUserRole(serviceUserRequest);
