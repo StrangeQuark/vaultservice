@@ -449,7 +449,7 @@ public class VaultService {
             LOGGER.info("Env file successfully downloaded");
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                    .contentType(MediaType.TEXT_PLAIN)
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .contentLength(envBytes.length)
                     .body(resource);
         } catch (Exception ex) {
