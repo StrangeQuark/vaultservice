@@ -449,7 +449,7 @@ public class VaultService {
             LOGGER.info("Env file successfully downloaded");
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                    .contentType(MediaType.TEXT_PLAIN)
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .contentLength(envBytes.length)
                     .body(resource);
         } catch (Exception ex) {
@@ -584,8 +584,21 @@ public class VaultService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAllRoles() {
         LOGGER.info("Attempting to get all roles");
-
         return ResponseEntity.ok(ServiceUserRole.values());
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getCurrentUserRole(ServiceUserRequest serviceUserRequest) {
+        LOGGER.info("Attempting to get current user's role");
+
+        Service service = serviceRepository.findByName(serviceUserRequest.getServiceName())
+                .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
+
+        ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+
+        LOGGER.info("Successfully retrieved current user's role");
+        return ResponseEntity.ok(requestingUser.getRole());
     }
 
     @Transactional
