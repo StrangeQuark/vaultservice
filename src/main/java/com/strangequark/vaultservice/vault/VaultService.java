@@ -588,10 +588,10 @@ public class VaultService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<?> getCurrentUserRole(ServiceUserRequest serviceUserRequest) {
+    public ResponseEntity<?> getCurrentUserRole(String serviceName) {
         LOGGER.info("Attempting to get current user's role");
 
-        Service service = serviceRepository.findByName(serviceUserRequest.getServiceName())
+        Service service = serviceRepository.findByName(serviceName)
                 .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
         ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())

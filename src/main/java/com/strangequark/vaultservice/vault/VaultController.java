@@ -139,9 +139,9 @@ public class VaultController {
         return vaultService.getAllRoles();
     }
 
-    @GetMapping("/get-current-user-role")
-    public ResponseEntity<?> getCurrentUserRole(ServiceUserRequest serviceUserRequest) {
-        return vaultService.getCurrentUserRole(serviceUserRequest);
+    @GetMapping("/get-current-user-role/{serviceName}")
+    public ResponseEntity<?> getCurrentUserRole(@PathVariable String serviceName) {
+        return vaultService.getCurrentUserRole(serviceName);
     }
 
     @PostMapping("/update-user-role")
