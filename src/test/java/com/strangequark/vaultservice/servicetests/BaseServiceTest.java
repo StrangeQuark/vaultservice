@@ -6,7 +6,6 @@ import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
 import com.strangequark.vaultservice.utility.AuthUtility;// Integration line: Auth
 import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Auth
@@ -14,11 +13,9 @@ import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRepository;
 import com.strangequark.vaultservice.vault.VaultService;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;// Integration line: Auth
@@ -31,6 +28,9 @@ import static org.mockito.Mockito.when;// Integration line: Auth
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
 public abstract class BaseServiceTest {
+    static {
+        System.setProperty("ENCRYPTION_KEY", "AA1A2A8C0E4F76FB3C13F66225AAAC42");
+    }
 
     @Autowired
     public ServiceRepository serviceRepository;
@@ -48,20 +48,12 @@ public abstract class BaseServiceTest {
     @MockitoBean
     public AuthUtility authUtility;
     public UUID testOwnerId = UUID.randomUUID();
-    public UUID testUserId = UUID.randomUUID();// Integration function end: Auth
-
+    public UUID testUserId = UUID.randomUUID();
+    public ServiceUser serviceUser;// Integration function end: Auth
 
     public Service testService;
     public Environment testEnvironment;
     public Variable testVariable;
-
-    @Value("${ENCRYPTION_KEY}")
-    String encryptionKey;
-
-    @BeforeAll
-    void setupEncryptionKey() {
-        System.setProperty("ENCRYPTION_KEY", encryptionKey);
-    }
 
     @BeforeEach
     void setup() {
@@ -75,7 +67,7 @@ public abstract class BaseServiceTest {
             variableRepository.save(testVariable);
 
             // Integration function start: Auth
-            ServiceUser serviceUser = new ServiceUser(testService, testOwnerId, ServiceUserRole.OWNER);
+            serviceUser = new ServiceUser(testService, testOwnerId, ServiceUserRole.OWNER);
             serviceUserRepository.save(serviceUser);
 
             // Mock authUtility functions

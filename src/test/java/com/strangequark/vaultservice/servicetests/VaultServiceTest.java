@@ -11,11 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class VaultServiceTest extends BaseServiceTest {
     @Test
     void createServiceTest() {
-        ResponseEntity<?> response =  vaultService.createService("testService1");
+        ResponseEntity<?> response = vaultService.createService("testService1");
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(serviceRepository.findByName("testService1").isPresent());
@@ -23,7 +26,7 @@ public class VaultServiceTest extends BaseServiceTest {
 
     @Test
     void createEnvironmentTest() {
-        ResponseEntity<?> response =  vaultService.createEnvironment(testService.getName(), "testEnvironment1");
+        ResponseEntity<?> response = vaultService.createEnvironment(testService.getName(), "testEnvironment1");
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(environmentRepository.findByNameAndServiceId("testEnvironment1", testService.getId()).isPresent());
@@ -31,35 +34,44 @@ public class VaultServiceTest extends BaseServiceTest {
 
     @Test
     void getServiceTest() {
-        ResponseEntity<?> response =  vaultService.getService(testService.getName());
+        ResponseEntity<?> response = vaultService.getService(testService.getName());
 
         Assertions.assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
+    void getEnvironmentsByServiceTest() {
+        ResponseEntity<?> response = vaultService.getEnvironmentsByService(testService.getName());
+        List<String> environments = (List<String>) response.getBody();
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertTrue(environments.contains(testEnvironment.getName()));
+    }
+
+    @Test
     void getEnvironmentTest() {
-        ResponseEntity<?> response =  vaultService.getEnvironment(testService.getName(), testEnvironment.getName());
+        ResponseEntity<?> response = vaultService.getEnvironment(testService.getName(), testEnvironment.getName());
 
         Assertions.assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
     void getVariablesByServiceTest() {
-        ResponseEntity<?> response =  vaultService.getVariablesByService(testService.getName());
+        ResponseEntity<?> response = vaultService.getVariablesByService(testService.getName());
 
         Assertions.assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
     void getVariablesByEnvironmentTest() {
-        ResponseEntity<?> response =  vaultService.getVariablesByEnvironment(testService.getName(), testEnvironment.getName());
+        ResponseEntity<?> response = vaultService.getVariablesByEnvironment(testService.getName(), testEnvironment.getName());
 
         Assertions.assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
     void getVariableByNameTest() {
-        ResponseEntity<?> response =  vaultService.getVariableByName(testService.getName(), testEnvironment.getName(), "testKey");
+        ResponseEntity<?> response = vaultService.getVariableByName(testService.getName(), testEnvironment.getName(), "testKey");
 
         Assertions.assertEquals(200, response.getStatusCode().value());
     }
@@ -67,7 +79,7 @@ public class VaultServiceTest extends BaseServiceTest {
     @Test
     void addVariableTest() {
         Variable variable = new Variable(testEnvironment, "testKey1", "testValue1");
-        ResponseEntity<?> response =  vaultService.addVariable(testService.getName(), testEnvironment.getName(), variable);
+        ResponseEntity<?> response = vaultService.addVariable(testService.getName(), testEnvironment.getName(), variable);
 
         Assertions.assertEquals(200, response.getStatusCode().value());
     }
@@ -78,6 +90,19 @@ public class VaultServiceTest extends BaseServiceTest {
                 new Variable(testEnvironment, testVariable.getKey(), "newValue"));
 
         Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals("newValue", variableRepository.findByEnvironmentIdAndKey(testEnvironment.getId(), testVariable.getKey()).get().getValue());
+    }
+
+    @Test
+    void updateVariablesTest() {
+        List<Variable> vars = new ArrayList<>();
+        vars.add(new Variable(testEnvironment, testVariable.getKey(), "newValue"));
+        vars.add(new Variable(testEnvironment, "skippedKey", "skippedValue"));
+
+        ResponseEntity<?> response = vaultService.updateVariables(testService.getName(), testEnvironment.getName(), vars);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals("Skipped variables: [skippedKey]", response.getBody().toString());
         Assertions.assertEquals("newValue", variableRepository.findByEnvironmentIdAndKey(testEnvironment.getId(), testVariable.getKey()).get().getValue());
     }
 
@@ -138,6 +163,62 @@ public class VaultServiceTest extends BaseServiceTest {
     }
 
     // Integration function start: Auth
+    @Test
+    void getAllServicesTest() {
+        ResponseEntity<?> response = vaultService.getAllServices();
+
+        List<String> services = (List<String>) response.getBody();
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertTrue(services.contains(testService.getName()));
+    }
+
+    @Test
+    void getUsersByServiceTest() {
+        ResponseEntity<?> response = vaultService.getUsersByService(testService.getName());
+
+        List<ServiceUser> users = (List<ServiceUser>) response.getBody();
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertTrue(users.stream().anyMatch(u -> u.getId().equals(serviceUser.getId())));
+    }
+
+    @Test
+    void getAllRolesTest() {
+        ResponseEntity<?> response = vaultService.getAllRoles();
+        List<ServiceUserRole> roles = Arrays.asList(((ServiceUserRole[]) response.getBody()));
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertTrue(roles.contains(ServiceUserRole.OWNER));
+        Assertions.assertTrue(roles.contains(ServiceUserRole.MANAGER));
+        Assertions.assertTrue(roles.contains(ServiceUserRole.MAINTAINER));
+    }
+
+    @Test
+    void getCurrentUserRoleTest() {
+        ResponseEntity<?> response = vaultService.getCurrentUserRole(testService.getName());
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals("OWNER", response.getBody().toString());
+    }
+
+    @Test
+    void updateUserRoleTest() {
+        serviceUserRepository.save(new ServiceUser(testService, testUserId, ServiceUserRole.MAINTAINER));
+
+        Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isPresent());
+
+        ServiceUserRequest serviceUserRequest = new ServiceUserRequest();
+        serviceUserRequest.setServiceName(testService.getName());
+        serviceUserRequest.setUsername("testUser");
+        serviceUserRequest.setRole(ServiceUserRole.OWNER);
+
+        ResponseEntity<?> response = vaultService.updateUserRole(serviceUserRequest);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals(ServiceUserRole.OWNER, serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).get().getRole());
+    }
+
     @Test
     void addUserToServiceTest() {
         ServiceUserRequest serviceUserRequest = new ServiceUserRequest();
