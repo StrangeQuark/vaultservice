@@ -6,11 +6,9 @@ import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRepository;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
@@ -21,8 +19,12 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @EntityScan(basePackages = "com.strangequark.vaultservice")
 public class BaseRepositoryTest {
+    static {
+        System.setProperty("ENCRYPTION_KEY", "AA1A2A8C0E4F76FB3C13F66225AAAC42");
+    }
+
     @Autowired
-    private TestEntityManager testEntityManager;
+    public TestEntityManager testEntityManager;
 
     @Autowired
     public ServiceRepository serviceRepository;
@@ -34,14 +36,6 @@ public class BaseRepositoryTest {
     public Service testService;
     public Environment testEnvironment;
     public Variable testVariable;
-
-    @Value("${ENCRYPTION_KEY}")
-    String encryptionKey;
-
-    @BeforeAll
-    void setupEncryptionKey() {
-        System.setProperty("ENCRYPTION_KEY", encryptionKey);
-    }
 
     @BeforeEach
     void beforeEach() {
