@@ -126,6 +126,38 @@
 			"response": []
 		},
 		{
+			"name": "Get Environments by Service",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6020/api/vault/get-environments-by-service/testService",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"get-environments-by-service",
+						"testService"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Get Environment",
 			"request": {
 				"auth": {
@@ -342,6 +374,48 @@
 			"response": []
 		},
 		{
+			"name": "Update variables",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n    {\n        \"key\": \"abc2\",\n        \"value\": \"abcdefg\"\n    }\n]"
+				},
+				"url": {
+					"raw": "http://localhost:6020/api/vault/update-variables/testService/e3",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"update-variables",
+						"testService",
+						"e3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Add Env File",
 			"request": {
 				"auth": {
@@ -516,6 +590,172 @@
 						"vault",
 						"delete-service",
 						"testService"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Services",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6020/api/vault/get-all-services",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"get-all-services"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Users by Service",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6020/api/vault/get-users-by-service/testService",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"get-users-by-service",
+						"testService"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Roles",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6020/api/vault/get-all-roles",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"get-all-roles"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Current User Role",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:6020/api/vault/get-current-user-role/testService",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"get-current-user-role",
+						"testService"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update User Role",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"username\": \"testUser1\",\n    \"role\": \"MAINTAINER\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:6020/api/vault/update-user-role",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"update-user-role"
 					]
 				}
 			},
