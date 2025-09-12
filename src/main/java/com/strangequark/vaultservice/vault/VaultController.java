@@ -123,12 +123,12 @@ public class VaultController {
         return vaultService.deleteService(serviceName);
     }
 
-    // Integration function start: Auth
     @GetMapping("/get-all-services")
     public ResponseEntity<?> getAllServices() {
         return vaultService.getAllServices();
     }
 
+    // Integration function start: Auth
     @GetMapping("/get-users-by-service/{serviceName}")
     public ResponseEntity<?> getUsersByService(@PathVariable String serviceName) {
         return vaultService.getUsersByService(serviceName);
