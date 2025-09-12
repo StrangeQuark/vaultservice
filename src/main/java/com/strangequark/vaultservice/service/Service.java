@@ -3,7 +3,7 @@ package com.strangequark.vaultservice.service;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.strangequark.vaultservice.environment.Environment;
 
-import com.strangequark.vaultservice.serviceuser.ServiceUser;
+import com.strangequark.vaultservice.serviceuser.ServiceUser; // Integration line: Auth
 import com.strangequark.vaultservice.utility.LocalDateTimeEncryptDecryptConverter;
 import com.strangequark.vaultservice.utility.StringEncryptDecryptConverter;
 import jakarta.persistence.*;
