@@ -543,13 +543,13 @@ public class VaultService {
         }
     }
 
-    // Integration function start: Auth
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAllServices() {
         LOGGER.info("Attempting to get all services for user");
 
         try {
-            List<Service> services = serviceUserRepository.findServicesByUserId(UUID.fromString(jwtUtility.extractId()));
+            List<Service> services = serviceRepository.findAll();
+            services = serviceUserRepository.findServicesByUserId(UUID.fromString(jwtUtility.extractId())); // Integration line: Auth
 
             List<String> serviceNames = new ArrayList<>();
             for(Service service : services)
@@ -563,6 +563,7 @@ public class VaultService {
         }
     }
 
+    // Integration function start: Auth
     @Transactional(readOnly = true)
     public ResponseEntity<?> getUsersByService(String serviceName) {
         LOGGER.info("Attempting to get all users for service");
