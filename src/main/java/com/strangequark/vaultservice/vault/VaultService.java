@@ -86,8 +86,8 @@ public class VaultService {
             // Ensure that the request user has the OWNER or MAINTAINER role
             if ((requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER)) {
                 throw new RuntimeException("Only service users with OWNER or MANAGER roles can create environments");
-            }//Integration function end: Auth
-
+            }
+            //Integration function end: Auth
             if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
                 LOGGER.error("Environment creation failed - An environment with that name already exists in this service");
                 return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists in this service"));
@@ -115,8 +115,8 @@ public class VaultService {
 
             //Integration function start: Auth
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             return ResponseEntity.ok(service);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
@@ -134,8 +134,8 @@ public class VaultService {
 
             //Integration function start: Auth
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             List<Environment> environments = environmentRepository.findAllByServiceId(service.getId());
 
             List<String> environmentNames = new ArrayList<>();
@@ -160,8 +160,8 @@ public class VaultService {
 
             //Integration function start: Auth
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -182,8 +182,8 @@ public class VaultService {
 
             //Integration function start: Auth
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             List<Variable> variables = variableRepository.findByEnvironmentServiceId(service.getId());
 
             return ResponseEntity.ok(variables);
@@ -203,8 +203,8 @@ public class VaultService {
 
             //Integration function start: Auth
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -227,8 +227,8 @@ public class VaultService {
 
             //Integration function start: Auth
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -252,8 +252,8 @@ public class VaultService {
 
             //Integration function start: Auth
             ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -284,8 +284,8 @@ public class VaultService {
 
             //Integration function start: Auth
             ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -313,8 +313,8 @@ public class VaultService {
 
             //Integration function start: Auth
             ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -350,8 +350,8 @@ public class VaultService {
 
             //Integration function start: Auth
             ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -428,8 +428,8 @@ public class VaultService {
 
             //Integration function start: Auth
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -468,8 +468,8 @@ public class VaultService {
 
             //Integration function start: Auth
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));//Integration function end: Auth
-
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -501,8 +501,8 @@ public class VaultService {
             // Ensure that the request user has the OWNER or MANAGER role
             if (requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER) {
                 throw new RuntimeException("Only service users with OWNER or MANAGER roles can delete environments");
-            }//Integration function end: Auth
-
+            }
+            //Integration function end: Auth
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -531,8 +531,8 @@ public class VaultService {
             // Ensure that the request user has the OWNER role
             if (requestingUser.getRole() != ServiceUserRole.OWNER) {
                 throw new RuntimeException("Only service users with OWNER role can delete services");
-            }//Integration function end: Auth
-
+            }
+            //Integration function end: Auth
             serviceRepository.delete(service);
 
             LOGGER.info("Service successfully deleted");
@@ -562,7 +562,6 @@ public class VaultService {
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
-
     // Integration function start: Auth
     @Transactional(readOnly = true)
     public ResponseEntity<?> getUsersByService(String serviceName) {

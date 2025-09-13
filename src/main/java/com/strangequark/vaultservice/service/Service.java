@@ -48,8 +48,8 @@ public class Service {
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Environment> environments;
-
-    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true)// Integration function start: Auth
+    // Integration function start: Auth
+    @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<ServiceUser> serviceUsers;// Integration function end: Auth
 
@@ -103,7 +103,6 @@ public class Service {
     public void setEnvironments(List<Environment> environments) {
         this.environments = environments;
     }
-
     // Integration function start: Auth
     public List<ServiceUser> getServiceUsers() {
         return serviceUsers;

@@ -47,8 +47,8 @@ public class Variable {
     @Column(name = "updated_at")
     @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime updatedAt;
-
-    @Column(name = "last_updated_by")// Integration function start: Auth
+    // Integration function start: Auth
+    @Column(name = "last_updated_by")
     private UUID lastUpdatedBy;
 
     public UUID getLastUpdatedBy() {

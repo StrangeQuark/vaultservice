@@ -127,7 +127,6 @@ public class VaultController {
     public ResponseEntity<?> getAllServices() {
         return vaultService.getAllServices();
     }
-
     // Integration function start: Auth
     @GetMapping("/get-users-by-service/{serviceName}")
     public ResponseEntity<?> getUsersByService(@PathVariable String serviceName) {
