@@ -161,7 +161,6 @@ public class VaultServiceTest extends BaseServiceTest {
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(serviceRepository.findByName(testService.getName()).isEmpty());
     }
-
     // Integration function start: Auth
     @Test
     void getAllServicesTest() {
@@ -245,6 +244,5 @@ public class VaultServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isEmpty());
-    }
-    // Integration function end: Auth
+    }// Integration function end: Auth
 }

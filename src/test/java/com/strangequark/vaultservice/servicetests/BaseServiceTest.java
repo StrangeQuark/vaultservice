@@ -49,8 +49,8 @@ public abstract class BaseServiceTest {
     public AuthUtility authUtility;
     public UUID testOwnerId = UUID.randomUUID();
     public UUID testUserId = UUID.randomUUID();
-    public ServiceUser serviceUser;// Integration function end: Auth
-
+    public ServiceUser serviceUser;
+    // Integration function end: Auth
     public Service testService;
     public Environment testEnvironment;
     public Variable testVariable;
@@ -65,7 +65,6 @@ public abstract class BaseServiceTest {
             serviceRepository.save(testService);
             environmentRepository.save(testEnvironment);
             variableRepository.save(testVariable);
-
             // Integration function start: Auth
             serviceUser = new ServiceUser(testService, testOwnerId, ServiceUserRole.OWNER);
             serviceUserRepository.save(serviceUser);
