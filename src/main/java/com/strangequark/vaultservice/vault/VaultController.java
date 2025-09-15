@@ -156,5 +156,10 @@ public class VaultController {
     @PostMapping("/delete-user-from-service")
     public ResponseEntity<?> deleteUserFromService(@RequestBody ServiceUserRequest serviceUserRequest) {
         return vaultService.deleteUserFromService(serviceUserRequest);
+    }
+
+    @PostMapping("/delete-user-by-id-from-all-services")
+    public ResponseEntity<?> deleteUserByIdFromAllServices(@RequestBody String id) {
+        return vaultService.deleteUserByIdFromAllServices(id);
     }// Integration function end: Auth
 }
