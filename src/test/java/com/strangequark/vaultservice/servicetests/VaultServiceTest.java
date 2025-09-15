@@ -244,5 +244,21 @@ public class VaultServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isEmpty());
+    }
+
+    @Test
+    void deleteUserFromAllServicesTest() {
+        serviceUserRepository.save(new ServiceUser(testService, testUserId, ServiceUserRole.MAINTAINER));
+
+        Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isPresent());
+
+        ServiceUserRequest serviceUserRequest = new ServiceUserRequest();
+        serviceUserRequest.setServiceName(testService.getName());
+        serviceUserRequest.setUsername("testUser");
+
+        ResponseEntity<?> response = vaultService.deleteUserFromAllServices(serviceUserRequest);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isEmpty());
     }// Integration function end: Auth
 }
