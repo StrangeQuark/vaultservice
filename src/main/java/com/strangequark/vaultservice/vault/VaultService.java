@@ -748,5 +748,71 @@ public class VaultService {
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
+    }
+
+    @Transactional
+    public ResponseEntity<?> deleteUserByIdFromAllServices(String id) {
+        LOGGER.info("Attempting to delete user from all services");
+
+        try {
+            UUID userId = UUID.fromString(id);
+
+            List<Service> services = serviceUserRepository.findServicesByUserId(userId);
+
+            List<Map<String, String>> errors = new ArrayList<>();
+
+            for(Service service : services) {
+                ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                        .orElseGet(() -> {
+                            errors.add(Map.of(service.getName(), "Requesting user does not have access to this service"));
+                            return null;
+                        });
+
+                if(requestingUser == null)
+                    continue;
+
+                ServiceUser targetUser = serviceUserRepository.findByUserIdAndServiceId(userId, service.getId())
+                        .orElseGet(() -> {
+                            errors.add(Map.of(service.getName(), "Target user is not part of this service"));
+                            return null;
+                        });
+
+                if(targetUser == null)
+                    continue;
+
+                // Check if the requesting user is either attempting to remove self or is an OWNER
+                if(!requestingUser.getUserId().equals(targetUser.getUserId()) && requestingUser.getRole() != ServiceUserRole.OWNER) {
+                    errors.add(Map.of(service.getName(), "Only OWNER users can remove others"));
+                    continue;
+                }
+
+                // If the target user has an OWNER role, we must ensure that we're not removing the last OWNER from the service
+                if(targetUser.getRole() == ServiceUserRole.OWNER) {
+                    long ownerCount = service.getServiceUsers().stream()
+                            .filter(su -> su.getRole() == ServiceUserRole.OWNER)
+                            .count();
+
+                    if (ownerCount <= 1) {
+                        errors.add(Map.of(service.getName(), "Cannot remove the last OWNER from the service"));
+                    }
+                }
+            }
+
+            // If there were errors, return
+            if(!errors.isEmpty()) {
+                LOGGER.error("Error when trying to remove user from all services");
+                return ResponseEntity.status(400).body(errors);
+            }
+
+            for(Service service : services) {
+                serviceUserRepository.deleteServiceUser(userId, service.getId());
+            }
+
+            LOGGER.info("User successfully deleted from all services");
+            return ResponseEntity.ok("User successfully deleted from all services");
+        } catch(RuntimeException ex) {
+            LOGGER.error(ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
     }// Integration function end: Auth
 }
