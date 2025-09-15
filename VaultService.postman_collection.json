@@ -840,6 +840,46 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Delete user from all services",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"testUser1\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:6020/api/vault/delete-user-from-all-services",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"delete-user-from-all-services"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
