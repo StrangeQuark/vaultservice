@@ -751,11 +751,16 @@ public class VaultService {
     }
 
     @Transactional
-    public ResponseEntity<?> deleteUserByIdFromAllServices(String id) {
+    public ResponseEntity<?> deleteUserFromAllServices(ServiceUserRequest serviceUserRequest) {
         LOGGER.info("Attempting to delete user from all services");
 
         try {
-            UUID userId = UUID.fromString(id);
+            // Ensure the target user exists
+            String userIdStr = authUtility.getUserId(serviceUserRequest.getUsername());
+            if (userIdStr == null) {
+                throw new RuntimeException("Unable to retrieve user id");
+            }
+            UUID userId = UUID.fromString(userIdStr);
 
             List<Service> services = serviceUserRepository.findServicesByUserId(userId);
 
