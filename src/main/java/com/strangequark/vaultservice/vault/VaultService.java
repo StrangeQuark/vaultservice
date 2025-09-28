@@ -13,7 +13,6 @@ import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
-import com.strangequark.vaultservice.variable.VariableResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -235,7 +234,7 @@ public class VaultService {
             Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
-            return ResponseEntity.ok(new VariableResponse(variable));
+            return ResponseEntity.ok(variable);
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage());
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
