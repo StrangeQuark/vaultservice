@@ -797,7 +797,11 @@ public class VaultService {
                             .count();
 
                     if (ownerCount <= 1) {
-                        errors.add(Map.of(service.getName(), "Cannot remove the last OWNER from the service"));
+                        // If the user being deleted is the only user in the service, just delete the service
+                        if(service.getServiceUsers().size() == 1)
+                            serviceRepository.delete(service);
+                        else
+                            errors.add(Map.of(service.getName(), "Cannot remove the last OWNER from the service"));
                     }
                 }
             }
