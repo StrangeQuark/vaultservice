@@ -9,6 +9,7 @@ import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integrati
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
 import com.strangequark.vaultservice.utility.AuthUtility;// Integration line: Auth
 import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Auth
+import com.strangequark.vaultservice.utility.TelemetryUtility;// Integration line: Telemetry
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;// Integration line: Telemetry
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,12 +41,18 @@ public class VaultService {
     private EnvironmentRepository environmentRepository;
     @Autowired
     private VariableRepository variableRepository;
-    @Autowired// Integration function start: Auth
+    // Integration function start: Auth
+    @Autowired
     private ServiceUserRepository serviceUserRepository;
     @Autowired
     JwtUtility jwtUtility;
     @Autowired
-    AuthUtility authUtility;// Integration function end: Auth
+    AuthUtility authUtility;
+    // Integration function end: Auth
+    // Integration function start: Telemetry
+    @Autowired
+    TelemetryUtility telemetryUtility;
+    // Integration function end: Telemetry
 
     @Transactional
     public ResponseEntity<?> createService(String serviceName) {
@@ -61,6 +69,14 @@ public class VaultService {
             service.addUser(new ServiceUser(service, UUID.fromString(jwtUtility.extractId()), ServiceUserRole.OWNER));// Integration line: Auth
 
             serviceRepository.save(service);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-create-service",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "created-at", service.getCreatedAt()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("New service successfully created");
             return ResponseEntity.ok("New service successfully created");
@@ -96,6 +112,15 @@ public class VaultService {
             environment.setName(environmentName);
             environment.setService(service);
             environmentRepository.save(environment);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-create-environment",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "environment-name", environment.getName(),
+                            "created-at", service.getCreatedAt()
+                    )
+            ); // Integration function end: Telemetry
 
             return ResponseEntity.ok(environment);
         } catch (Exception ex) {
@@ -265,6 +290,15 @@ public class VaultService {
             variable.setEnvironment(environment);
             variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(variable);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-add-variable",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "environment-name", environment.getName(),
+                            "created-at", variable.getCreatedAt()
+                    )
+            ); // Integration function end: Telemetry
 
             return ResponseEntity.ok(variable);
         } catch (Exception ex) {
@@ -294,6 +328,14 @@ public class VaultService {
             var.setValue(variable.getValue());
             var.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(var);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-update-variable",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "environment-name", environment.getName()
+                    )
+            ); // Integration function end: Telemetry
 
             return ResponseEntity.ok(var);
         } catch (Exception ex) {
@@ -331,6 +373,14 @@ public class VaultService {
                 v.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
                 variableRepository.save(v);
             }
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-update-variables",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "environment-name", environment.getName()
+                    )
+            ); // Integration function end: Telemetry
 
             return skippedVars.isEmpty() ? ResponseEntity.ok("All variables updated successfully") : ResponseEntity.ok("Skipped variables: " + skippedVars);
         } catch (Exception ex) {
@@ -404,6 +454,14 @@ public class VaultService {
                 variableRepository.save(variable);
                 added++;
             }
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-add-env-file",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "environment-name", environment.getName()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("File processed: " + added + " variables added, " + skipped + " skipped.");
             return ResponseEntity.ok("Variables added: " + added + ", Skipped: " + skipped);
@@ -444,6 +502,14 @@ public class VaultService {
             ByteArrayResource resource = new ByteArrayResource(envBytes);
 
             String filename = serviceName + "-" + environmentName + ".env";
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-download-env-file",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "environment-name", environment.getName()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("Env file successfully downloaded");
             return ResponseEntity.ok()
@@ -476,6 +542,14 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
             variableRepository.deleteById(variable.getId());
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-delete-variable",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "environment-name", environment.getName()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("Variable successfully deleted");
             return ResponseEntity.ok("Variable successfully deleted");
@@ -506,6 +580,14 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
             environmentRepository.delete(environment);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-delete-environment",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName(),
+                            "environment-name", environment.getName()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("Environment successfully deleted");
             return ResponseEntity.ok("Environment successfully deleted");
@@ -533,6 +615,13 @@ public class VaultService {
             }
             //Integration function end: Auth
             serviceRepository.delete(service);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-delete-service",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "service-name", service.getName()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("Service successfully deleted");
             return ResponseEntity.ok("Service successfully deleted");
@@ -650,6 +739,15 @@ public class VaultService {
             //Update the target user's role
             targetUser.setRole(serviceUserRequest.getRole());
             serviceUserRepository.save(targetUser);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-update-user-role",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "updated-user-id", targetUser.getId(),
+                            "new-role", serviceUserRequest.getRole(),
+                            "updated-at", LocalDateTime.now()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("User role successfully updated");
             return ResponseEntity.ok("User role successfully updated");
@@ -690,6 +788,15 @@ public class VaultService {
             service.addUser(new ServiceUser(service, userId, serviceUserRequest.getRole()));
 
             serviceRepository.save(service);
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-add-user-to-service",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "added-user-id", userId,
+                            "service-id", service.getId(),
+                            "updated-at", LocalDateTime.now()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("User successfully added to service");
             return ResponseEntity.ok("User successfully added to service");
@@ -741,6 +848,14 @@ public class VaultService {
             if(deletedCount == 0)
                 throw new RuntimeException("User was not successfully deleted from service");
 
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-delete-user-from-service",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "deleted-user-id", targetUser.getId(),
+                            "deleted-at", LocalDateTime.now()
+                    )
+            ); // Integration function end: Telemetry
             LOGGER.info("User successfully deleted from service");
             return ResponseEntity.ok("User successfully deleted from service");
         } catch(RuntimeException ex) {
@@ -815,6 +930,15 @@ public class VaultService {
             for(Service service : services) {
                 serviceUserRepository.deleteServiceUser(userId, service.getId());
             }
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-delete-user-from-all-services",
+                    true, // Integration line: Auth
+                    Map.of(
+                            "deleted-user-id", userId,
+                            "deleted-from-collections", services,
+                            "deleted-at", LocalDateTime.now()
+                    )
+            ); // Integration function end: Telemetry
 
             LOGGER.info("User successfully deleted from all services");
             return ResponseEntity.ok("User successfully deleted from all services");
