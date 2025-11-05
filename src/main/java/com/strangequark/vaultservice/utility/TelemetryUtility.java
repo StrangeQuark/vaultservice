@@ -19,7 +19,7 @@ public class TelemetryUtility {
     private static final Logger LOGGER = LoggerFactory.getLogger(TelemetryUtility.class);
 
     private KafkaProducer<String, String> producer;
-    private String cachedServiceToken = null;
+    private String cachedServiceToken = null; // Integration line: Auth
     // Integration function start: Auth
     @Autowired
     private AuthUtility authUtility;
