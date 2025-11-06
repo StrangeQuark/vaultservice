@@ -935,7 +935,7 @@ public class VaultService {
                     true, // Integration line: Auth
                     Map.of(
                             "deleted-user-id", userId,
-                            "deleted-from-collections", services,
+                            "deleted-from-services", services.stream().map(Service::getName).toList(),
                             "deleted-at", LocalDateTime.now()
                     )
             ); // Integration function end: Telemetry
