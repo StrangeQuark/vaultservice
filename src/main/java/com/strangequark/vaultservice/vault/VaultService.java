@@ -73,8 +73,8 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-create-service",
                     true, // Integration line: Auth
                     Map.of(
-                            "service-name", service.getName(),
-                            "created-at", service.getCreatedAt()
+                            "service-id", service.getId(),
+                            "service-name", service.getName()
                     )
             ); // Integration function end: Telemetry
 
@@ -116,9 +116,10 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-create-environment",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName(),
-                            "environment-name", environment.getName(),
-                            "created-at", service.getCreatedAt()
+                            "environment-id", environment.getId(),
+                            "environment-name", environment.getName()
                     )
             ); // Integration function end: Telemetry
 
@@ -294,9 +295,10 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-add-variable",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName(),
-                            "environment-name", environment.getName(),
-                            "created-at", variable.getCreatedAt()
+                            "environment-id", environment.getId(),
+                            "environment-name", environment.getName()
                     )
             ); // Integration function end: Telemetry
 
@@ -332,7 +334,9 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-update-variable",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName(),
+                            "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
             ); // Integration function end: Telemetry
@@ -377,8 +381,12 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-update-variables",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName(),
-                            "environment-name", environment.getName()
+                            "environment-id", environment.getId(),
+                            "environment-name", environment.getName(),
+                            "updated-count", variables.size(),
+                            "skipped-count", skippedVars.size()
                     )
             ); // Integration function end: Telemetry
 
@@ -458,8 +466,12 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-add-env-file",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName(),
-                            "environment-name", environment.getName()
+                            "environment-id", environment.getId(),
+                            "environment-name", environment.getName(),
+                            "added-count", added,
+                            "skipped-count", skipped
                     )
             ); // Integration function end: Telemetry
 
@@ -506,7 +518,9 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-download-env-file",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName(),
+                            "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
             ); // Integration function end: Telemetry
@@ -546,7 +560,9 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-delete-variable",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName(),
+                            "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
             ); // Integration function end: Telemetry
@@ -584,7 +600,9 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-delete-environment",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName(),
+                            "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
             ); // Integration function end: Telemetry
@@ -619,6 +637,7 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-delete-service",
                     true, // Integration line: Auth
                     Map.of(
+                            "service-id", service.getId(),
                             "service-name", service.getName()
                     )
             ); // Integration function end: Telemetry
@@ -743,9 +762,9 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-update-user-role",
                     true, // Integration line: Auth
                     Map.of(
-                            "updated-user-id", targetUser.getId(),
-                            "new-role", serviceUserRequest.getRole(),
-                            "updated-at", LocalDateTime.now()
+                            "service-id", service.getId(),
+                            "service-name", service.getName(),
+                            "role", serviceUserRequest.getRole().name()
                     )
             ); // Integration function end: Telemetry
 
@@ -792,9 +811,8 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-add-user-to-service",
                     true, // Integration line: Auth
                     Map.of(
-                            "added-user-id", userId,
                             "service-id", service.getId(),
-                            "updated-at", LocalDateTime.now()
+                            "service-name", service.getName()
                     )
             ); // Integration function end: Telemetry
 
@@ -852,8 +870,8 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-delete-user-from-service",
                     true, // Integration line: Auth
                     Map.of(
-                            "deleted-user-id", targetUser.getId(),
-                            "deleted-at", LocalDateTime.now()
+                            "service-id", service.getId(),
+                            "service-name", service.getName()
                     )
             ); // Integration function end: Telemetry
             LOGGER.info("User successfully deleted from service");
@@ -934,9 +952,7 @@ public class VaultService {
             telemetryUtility.sendTelemetryEvent("vault-delete-user-from-all-services",
                     true, // Integration line: Auth
                     Map.of(
-                            "deleted-user-id", userId,
-                            "deleted-from-services", services.stream().map(Service::getName).toList(),
-                            "deleted-at", LocalDateTime.now()
+                            "services-count", services.size()
                     )
             ); // Integration function end: Telemetry
 
