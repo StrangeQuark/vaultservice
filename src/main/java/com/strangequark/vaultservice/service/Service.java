@@ -8,7 +8,7 @@ import com.strangequark.vaultservice.utility.LocalDateTimeEncryptDecryptConverte
 import com.strangequark.vaultservice.utility.StringEncryptDecryptConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.ArrayList; // Integration line: Auth
 import java.util.List;
 import java.util.UUID;
 
