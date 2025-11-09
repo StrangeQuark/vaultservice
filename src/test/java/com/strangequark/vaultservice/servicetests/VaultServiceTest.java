@@ -12,7 +12,7 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Arrays; // Integration line: Auth
 import java.util.List;
 
 public class VaultServiceTest extends BaseServiceTest {
