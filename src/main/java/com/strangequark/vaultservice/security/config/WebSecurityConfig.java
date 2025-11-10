@@ -19,11 +19,9 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                .csrf().disable()//Disable CSRF
-                .authorizeHttpRequests().requestMatchers("**").permitAll()//List of strings (URLs) which are whitelisted and don't need to be authenticated
-                .anyRequest().authenticated()//All other requests need to be authenticated
-                .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);//Spring will create a new session for each request
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return httpSecurity.build();
     }
