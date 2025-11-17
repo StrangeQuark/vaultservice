@@ -69,9 +69,8 @@ public class VaultService {
 
             serviceRepository.save(service);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-create-service",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-create-service", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
@@ -112,9 +111,8 @@ public class VaultService {
             environment.setService(service);
             environmentRepository.save(environment);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-create-environment",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-create-environment", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -291,9 +289,8 @@ public class VaultService {
             variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(variable);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-add-variable",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-add-variable", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -330,9 +327,8 @@ public class VaultService {
             var.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(var);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-update-variable",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-update-variable", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -377,9 +373,8 @@ public class VaultService {
                 variableRepository.save(v);
             }
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-update-variables",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-update-variables", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -462,9 +457,8 @@ public class VaultService {
                 added++;
             }
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-add-env-file",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-add-env-file", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -514,9 +508,8 @@ public class VaultService {
 
             String filename = serviceName + "-" + environmentName + ".env";
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-download-env-file",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-download-env-file", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -556,9 +549,8 @@ public class VaultService {
 
             variableRepository.deleteById(variable.getId());
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-variable",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-delete-variable", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -596,9 +588,8 @@ public class VaultService {
 
             environmentRepository.delete(environment);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-environment",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-delete-environment", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -633,9 +624,8 @@ public class VaultService {
             //Integration function end: Auth
             serviceRepository.delete(service);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-service",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-delete-service", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
@@ -758,9 +748,8 @@ public class VaultService {
             targetUser.setRole(serviceUserRequest.getRole());
             serviceUserRepository.save(targetUser);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-update-user-role",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-update-user-role", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "role", serviceUserRequest.getRole().name()
@@ -807,9 +796,8 @@ public class VaultService {
 
             serviceRepository.save(service);
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-add-user-to-service",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-add-user-to-service", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
@@ -866,9 +854,8 @@ public class VaultService {
                 throw new RuntimeException("User was not successfully deleted from service");
 
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-user-from-service",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-delete-user-from-service", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
@@ -948,9 +935,8 @@ public class VaultService {
                 serviceUserRepository.deleteServiceUser(userId, service.getId());
             }
             // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-user-from-all-services",
-                    true, // Integration line: Auth
-                    Map.of(
+            telemetryUtility.sendTelemetryEvent("vault-delete-user-from-all-services", Map.of(
+                            "userId", jwtUtility.extractId(), // Integration line: Auth
                             "services-count", services.size()
                     )
             ); // Integration function end: Telemetry
