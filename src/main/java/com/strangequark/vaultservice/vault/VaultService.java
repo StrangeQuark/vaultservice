@@ -79,7 +79,8 @@ public class VaultService {
             LOGGER.info("New service successfully created");
             return ResponseEntity.ok("New service successfully created");
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to create service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -120,9 +121,11 @@ public class VaultService {
                     )
             ); // Integration function end: Telemetry
 
+            LOGGER.info("New environment successfully created");
             return ResponseEntity.ok(environment);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to create environment: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -130,7 +133,7 @@ public class VaultService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getService(String serviceName) {
         try {
-            LOGGER.info("Attempting to get service");
+            LOGGER.debug("Attempting to get service");
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
@@ -141,7 +144,8 @@ public class VaultService {
             //Integration function end: Auth
             return ResponseEntity.ok(service);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to get service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -149,7 +153,7 @@ public class VaultService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getEnvironmentsByService(String serviceName) {
         try {
-            LOGGER.info("Attempting to get environments by service");
+            LOGGER.debug("Attempting to get environments by service");
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
@@ -164,10 +168,11 @@ public class VaultService {
             for(Environment env : environments)
                 environmentNames.add(env.getName());
 
-            LOGGER.info("Successfully retrieved all environments by service");
+            LOGGER.debug("Successfully retrieved all environments by service");
             return ResponseEntity.ok(environmentNames);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to get environments by service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -175,7 +180,7 @@ public class VaultService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getEnvironment(String serviceName, String environmentName) {
         try {
-            LOGGER.info("Attempting to get environment");
+            LOGGER.debug("Attempting to get environment");
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
@@ -189,7 +194,8 @@ public class VaultService {
 
             return ResponseEntity.ok(environment);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to get environment: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -197,7 +203,7 @@ public class VaultService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getVariablesByService(String serviceName) {
         try {
-            LOGGER.info("Attempting to get variables by service");
+            LOGGER.debug("Attempting to get variables by service");
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
@@ -210,7 +216,8 @@ public class VaultService {
 
             return ResponseEntity.ok(variables);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to get variables by service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -218,7 +225,7 @@ public class VaultService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getVariablesByEnvironment(String serviceName, String environmentName) {
         try {
-            LOGGER.info("Attempting to get variables by environment");
+            LOGGER.debug("Attempting to get variables by environment");
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
@@ -234,7 +241,8 @@ public class VaultService {
 
             return ResponseEntity.ok(variables);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to get variables by environment: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -242,7 +250,7 @@ public class VaultService {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getVariableByName(String serviceName, String environmentName, String variableName) {
         try {
-            LOGGER.info("Attempting to get variable by name");
+            LOGGER.debug("Attempting to get variable by name");
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
@@ -259,7 +267,8 @@ public class VaultService {
 
             return ResponseEntity.ok(variable);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to get variable by name: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -298,9 +307,11 @@ public class VaultService {
                     )
             ); // Integration function end: Telemetry
 
+            LOGGER.info("New variable successfully added");
             return ResponseEntity.ok(variable);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to add variable: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -336,9 +347,11 @@ public class VaultService {
                     )
             ); // Integration function end: Telemetry
 
+            LOGGER.info("Variable successfully updated");
             return ResponseEntity.ok(var);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to update variable: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -384,9 +397,11 @@ public class VaultService {
                     )
             ); // Integration function end: Telemetry
 
+            LOGGER.info("Variables successfully updated");
             return skippedVars.isEmpty() ? ResponseEntity.ok("All variables updated successfully") : ResponseEntity.ok("Skipped variables: " + skippedVars);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to update multiple variables: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -418,8 +433,8 @@ public class VaultService {
                         try {
                             return var.getKey();
                         } catch (Exception ex) {
-                            LOGGER.error("Decryption failed for a key");
-                            LOGGER.error(ex.getMessage());
+                            LOGGER.error("Failed to decrypt a key while adding env file: " + ex.getMessage());
+                            LOGGER.debug("Stack trace: ", ex);
                             return null;
                         }
                     })
@@ -443,7 +458,7 @@ public class VaultService {
                 String value = line.substring(equalsIndex + 1).trim();
 
                 if (existingKeys.contains(key)) {
-                    LOGGER.info("Skipping existing variable");
+                    LOGGER.debug("Skipping existing variable");
                     skipped++;
                     continue;
                 }
@@ -470,12 +485,9 @@ public class VaultService {
 
             LOGGER.info("File processed: " + added + " variables added, " + skipped + " skipped.");
             return ResponseEntity.ok("Variables added: " + added + ", Skipped: " + skipped);
-        } catch (NullPointerException ex) {
-            LOGGER.error("NPE - Invalid file extension");
-            LOGGER.error(ex.getMessage());
-            return ResponseEntity.status(400).body(new ErrorResponse("Invalid file extension"));
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to add env file: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(500).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -524,7 +536,8 @@ public class VaultService {
                     .contentLength(envBytes.length)
                     .body(resource);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to download env file: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(500).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -561,7 +574,8 @@ public class VaultService {
             LOGGER.info("Variable successfully deleted");
             return ResponseEntity.ok("Variable successfully deleted");
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to delete variable: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -600,7 +614,8 @@ public class VaultService {
             LOGGER.info("Environment successfully deleted");
             return ResponseEntity.ok("Environment successfully deleted");
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to delete environment: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -634,14 +649,15 @@ public class VaultService {
             LOGGER.info("Service successfully deleted");
             return ResponseEntity.ok("Service successfully deleted");
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to delete service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAllServices() {
-        LOGGER.info("Attempting to get all services for user");
+        LOGGER.debug("Attempting to get all services for user");
 
         try {
             List<Service> services = serviceRepository.findAll();
@@ -651,17 +667,18 @@ public class VaultService {
             for(Service service : services)
                 serviceNames.add(service.getName());
 
-            LOGGER.info("Service retrieval successful");
+            LOGGER.debug("Service retrieval successful");
             return ResponseEntity.ok(serviceNames);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to get all services: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
     // Integration function start: Auth
     @Transactional(readOnly = true)
     public ResponseEntity<?> getUsersByService(String serviceName) {
-        LOGGER.info("Attempting to get all users for service");
+        LOGGER.debug("Attempting to get all users for service");
 
         try {
             Service service = serviceRepository.findByName(serviceName)
@@ -669,32 +686,40 @@ public class VaultService {
 
             List<ServiceUser> users = serviceUserRepository.findAllByServiceId(service.getId());
 
-            LOGGER.info("User list retrieval successful");
+            LOGGER.debug("User list retrieval successful");
             return ResponseEntity.ok(users);
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to get users by service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAllRoles() {
-        LOGGER.info("Attempting to get all roles");
+        LOGGER.debug("Attempting to get all roles");
+
         return ResponseEntity.ok(ServiceUserRole.values());
     }
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getCurrentUserRole(String serviceName) {
-        LOGGER.info("Attempting to get current user's role");
+        LOGGER.debug("Attempting to get current user's role");
 
-        Service service = serviceRepository.findByName(serviceName)
-                .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
+        try {
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
-        ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
 
-        LOGGER.info("Successfully retrieved current user's role");
-        return ResponseEntity.ok(requestingUser.getRole());
+            LOGGER.debug("Successfully retrieved current user's role");
+            return ResponseEntity.ok(requestingUser.getRole());
+        } catch (Exception ex) {
+            LOGGER.error("Failed to get current user role: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
     }
 
     @Transactional
@@ -759,7 +784,8 @@ public class VaultService {
             LOGGER.info("User role successfully updated");
             return ResponseEntity.ok("User role successfully updated");
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to update user role: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -806,7 +832,8 @@ public class VaultService {
             LOGGER.info("User successfully added to service");
             return ResponseEntity.ok("User successfully added to service");
         } catch (Exception ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to add user to service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -863,7 +890,8 @@ public class VaultService {
             LOGGER.info("User successfully deleted from service");
             return ResponseEntity.ok("User successfully deleted from service");
         } catch(RuntimeException ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to delete user from service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
@@ -944,7 +972,8 @@ public class VaultService {
             LOGGER.info("User successfully deleted from all services");
             return ResponseEntity.ok("User successfully deleted from all services");
         } catch(RuntimeException ex) {
-            LOGGER.error(ex.getMessage());
+            LOGGER.error("Failed to delete user from all services: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }// Integration function end: Auth
