@@ -1,5 +1,10 @@
 pipeline {
-    agent { label 'Host PC' }
+    agent {
+        docker {
+            image 'docker:26-cli'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
 
     stages {
         // Because the vault service cannot request secrets from itself upon start up without extensive initialization
@@ -38,7 +43,7 @@ pipeline {
                             try {
                                 echo "Health check attempt ${i + 1}..."
                                 def healthResponse = httpRequest(
-                                    url: 'http://localhost:6020/api/vault/health',
+                                    url: 'http://host.docker.internal:6020/api/vault/health',
                                     validResponseCodes: '200'
                                 )
                                 echo "App is healthy: ${healthResponse.status}"
