@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:26-cli'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent { label 'Host PC' }
 
     stages {
         // Because the vault service cannot request secrets from itself upon start up without extensive initialization
