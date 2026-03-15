@@ -161,5 +161,18 @@ public class VaultController {
     @PostMapping("/delete-user-from-all-services")
     public ResponseEntity<?> deleteUserFromAllServices(@RequestBody ServiceUserRequest serviceUserRequest) {
         return vaultService.deleteUserFromAllServices(serviceUserRequest);
+    }
+
+    @PostMapping("/bootstrap/add-env/{serviceName}/{environmentName}")
+    public ResponseEntity<?> bootstrapEnvFile(
+            @PathVariable String serviceName,
+            @PathVariable String environmentName,
+            @RequestParam("file") MultipartFile file) {
+        return vaultService.bootstrapEnvFile(serviceName, environmentName, file);
+    }
+
+    @PostMapping("/bootstrap/bootstrap-user/{token}")
+    public ResponseEntity<?> bootstrapUser(@PathVariable String token) {
+        return vaultService.bootstrapUser(token);
     }// Integration function end: Auth
 }
