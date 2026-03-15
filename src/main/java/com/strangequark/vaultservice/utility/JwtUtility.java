@@ -15,6 +15,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.security.Key;
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 public class JwtUtility {
@@ -24,7 +26,7 @@ public class JwtUtility {
     private String SECRET_KEY;
 
     public String extractId() {
-        LOGGER.debug("Attempting to extract subject from JWT");
+        LOGGER.debug("Attempting to extract ID from JWT");
 
         String token = getTokenFromHeader();
         Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
@@ -35,8 +37,23 @@ public class JwtUtility {
                 .parseClaimsJws(token)
                 .getBody();
 
-        LOGGER.debug("Subject successfully extracted from JWT");
+        LOGGER.debug("ID successfully extracted from JWT");
         return claims.getId();
+    }
+
+    public String extractSubject(String token) {
+        LOGGER.debug("Attempting to extract subject from JWT");
+
+        Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
+
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        LOGGER.debug("Subject successfully extracted from JWT");
+        return claims.getSubject();
     }
 
     private String getTokenFromHeader() {
@@ -55,6 +72,26 @@ public class JwtUtility {
 
         LOGGER.debug("Token successfully retrieved from header");
         return authHeader.substring(7); // Remove "Bearer "
+    }
+
+    public String generateBootstrapToken(String service) {
+        LOGGER.debug("Generating bootstrap token for service " + service);
+
+        Key key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY));
+
+        Instant now = Instant.now();
+        Instant expiration = now.plusSeconds(1800);
+
+        String token = Jwts.builder()
+                .setId(UUID.randomUUID().toString())
+                .setSubject(service)
+                .setIssuedAt(java.util.Date.from(now))
+                .setExpiration(java.util.Date.from(expiration))
+                .signWith(key)
+                .compact();
+
+        LOGGER.debug("Bootstrap token generated successfully");
+        return token;
     }
     // Integration function start: Telemetry
     public boolean isTokenValid(String token) {
