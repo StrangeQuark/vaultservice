@@ -174,5 +174,10 @@ public class VaultController {
     @PostMapping("/bootstrap/bootstrap-user/{token}")
     public ResponseEntity<?> bootstrapUser(@PathVariable String token) {
         return vaultService.bootstrapUser(token);
+    }
+
+    @GetMapping("/cicd/{serviceName}/{environmentName}")
+    public ResponseEntity<?> cicdGet(@PathVariable String serviceName, @PathVariable String environmentName) {
+        return vaultService.cicdGet(serviceName, environmentName);
     }// Integration function end: Auth
 }

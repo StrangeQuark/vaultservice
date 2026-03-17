@@ -14,20 +14,23 @@ import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,6 +51,8 @@ public class VaultService {
     JwtUtility jwtUtility;
     @Autowired
     AuthUtility authUtility;
+    @Value("${CICD_TOKEN}")
+    private String CICD_TOKEN;
     // Integration function end: Auth
     // Integration function start: Telemetry
     @Autowired
@@ -1076,6 +1081,40 @@ public class VaultService {
             return ResponseEntity.ok("User successfully bootstrapped to service");
         } catch (Exception ex) {
             LOGGER.error("Failed to bootstrap user to service: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
+
+    public ResponseEntity<?> cicdGet(String serviceName, String environmentName) {
+        try {
+            LOGGER.info("Attempting to CICD get");
+
+            // Get the API token from the header
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs == null) {
+                throw new IllegalStateException("No request context available");
+            }
+
+            HttpServletRequest request = attrs.getRequest();
+            String cicdToken = request.getHeader("X-CICD-TOKEN");
+
+            if (cicdToken == null || !cicdToken.matches(CICD_TOKEN)) {
+                throw new RuntimeException("Invalid CICD request token");
+            }
+
+            Service service = serviceRepository.findByName(serviceName)
+                    .orElseThrow(() -> new RuntimeException("Service not found"));
+
+            Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
+                    .orElseThrow(() -> new RuntimeException("Environment not found"));
+
+            List<Variable> variables = variableRepository.findByEnvironmentId(environment.getId());
+
+            LOGGER.info("CICD get success");
+            return ResponseEntity.ok(variables);
+        } catch (Exception ex) {
+            LOGGER.error("CICD get failure: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
