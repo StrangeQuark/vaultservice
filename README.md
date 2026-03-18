@@ -1,6 +1,7 @@
 # Vaultservice
 **Vaultservice** is a secure microservice for storing and retrieving environment variables and secrets.<br><br>
-It uses AES encryption to protect variables at rest, and supports a hierarchical structure of services->environments->variables.
+It uses AES encryption to protect variables at rest, and supports a hierarchical structure of:
+<br>`Services -> Environments -> Variables`
 <br><br><br>
 
 ## Features
