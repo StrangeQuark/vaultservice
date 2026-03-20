@@ -27,8 +27,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh "docker-compose up --build -d"
-//                         bat "docker-compose up --build -d" // For windows runs
+                        sh "docker compose up --build -d"
+//                         bat "docker compose up --build -d" // For windows runs
 
                         def maxRetries = 4 * 10
                         def retryInterval = 15
@@ -38,7 +38,7 @@ pipeline {
                             try {
                                 echo "Health check attempt ${i + 1}..."
                                 def healthResponse = httpRequest(
-                                    url: 'http://host.docker.internal:6020/api/vault/health',
+                                    url: 'http://localhost:6020/api/vault/health',
                                     validResponseCodes: '200'
                                 )
                                 echo "App is healthy: ${healthResponse.status}"
@@ -52,15 +52,15 @@ pipeline {
 
                         if (!success) {
                             echo "Health check ultimately failed. Tearing down containers."
-                            sh "docker-compose down"
-//                             bat "docker-compose down" // For windows runs
+                            sh "docker compose down"
+//                             bat "docker compose down" // For windows runs
                             error("Deployment failed: service not healthy.")
                         }
 
                     } catch (ex) {
                         echo "Unexpected failure: ${ex.getMessage()}"
-                        sh "docker-compose down"
-//                         bat "docker-compose down" // For windows runs
+                        sh "docker compose down"
+//                         bat "docker compose down" // For windows runs
                         error("Deployment crashed.")
                     }
                 }
