@@ -441,7 +441,7 @@
 						{
 							"key": "file",
 							"type": "file",
-							"src": "/home/strangequark/Desktop/Microservices/authservice/.env"
+							"src": []
 						}
 					]
 				},
@@ -842,7 +842,7 @@
 			"response": []
 		},
 		{
-			"name": "Delete user from all services",
+			"name": "Delete User from all Services",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -876,6 +876,118 @@
 						"api",
 						"vault",
 						"delete-user-from-all-services"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Bootstrap env file",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/home/strangequark/Music/t.env"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:6020/api/vault/bootstrap/add-env/testBootstrapService/testBootstrapEnv",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"bootstrap",
+						"add-env",
+						"testBootstrapService",
+						"testBootstrapEnv"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Bootstrap user",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{ACCESS_TOKEN}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:6020/api/vault/bootstrap/bootstrap-user/jwtTokenHere",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"bootstrap",
+						"bootstrap-user",
+						"jwtTokenHere"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CICD get",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-CICD-TOKEN",
+						"value": "12C951166DD986226A26E65DEC4CC4C1",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:6020/api/vault/cicd/testBootstrapService/testBootstrapEnv",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "6020",
+					"path": [
+						"api",
+						"vault",
+						"cicd",
+						"testBootstrapService",
+						"testBootstrapEnv"
 					]
 				}
 			},
