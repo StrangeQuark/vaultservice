@@ -16,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;// Integration line: Auth
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;// Integration line: Auth
@@ -39,7 +40,13 @@ public abstract class BaseServiceTest {
     @Autowired
     public VaultService vaultService;
 
-    @Autowired// Integration function start: Auth
+    public Service testService;
+    public Environment testEnvironment;
+    public Variable testVariable;
+    // Integration function start: Auth
+    @Value("${CICD_TOKEN}")
+    public String CICD_TOKEN;
+    @Autowired
     public ServiceUserRepository serviceUserRepository;
     @MockitoBean
     public JwtUtility jwtUtility;
@@ -48,10 +55,9 @@ public abstract class BaseServiceTest {
     public UUID testOwnerId = UUID.randomUUID();
     public UUID testUserId = UUID.randomUUID();
     public ServiceUser serviceUser;
+    public String testBootstrapService = "testBootstrapService";
+    public String testBootstrapToken = "testBootstrapToken";
     // Integration function end: Auth
-    public Service testService;
-    public Environment testEnvironment;
-    public Variable testVariable;
 
     @BeforeEach
     void setup() {
@@ -69,6 +75,9 @@ public abstract class BaseServiceTest {
 
             // Mock authUtility functions
             when(jwtUtility.extractId()).thenReturn(testOwnerId.toString());
+            when(jwtUtility.generateBootstrapToken(testBootstrapService)).thenReturn(testBootstrapToken);
+            when(jwtUtility.isTokenValid(testBootstrapToken)).thenReturn(true);
+            when(jwtUtility.extractSubject(testBootstrapToken)).thenReturn(testService.getName());
             when(authUtility.getUserId("testUser")).thenReturn(testUserId.toString());// Integration function end: Auth
         } catch (Exception ex) {
             ex.printStackTrace();

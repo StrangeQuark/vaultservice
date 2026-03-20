@@ -8,7 +8,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;// Integration line: Auth
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.context.request.RequestContextHolder;// Integration line: Auth
+import org.springframework.web.context.request.ServletRequestAttributes;// Integration line: Auth
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -260,5 +263,57 @@ public class VaultServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isEmpty());
+    }
+
+    @Test
+    void bootstrapEnvFileTest() {
+        String fileContent = "FOO=bar\nTEST=val1\n";
+
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
+        );
+
+        ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile);
+
+        String responseBody = response.getBody().toString();
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals(testBootstrapToken, responseBody, "Invalid test return. " +
+                "Expected " + testBootstrapToken + " but got " + responseBody);
+    }
+
+    @Test
+    void bootstrapUserTest() {
+        String fileContent = "FOO=bar\nTEST=val1\n";
+
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
+        );
+
+        ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile);
+
+        String responseBody = response.getBody().toString();
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals(testBootstrapToken, responseBody, "Invalid test return. " +
+                "Expected " + testBootstrapToken + " but got " + responseBody);
+
+        // Once env file is bootstrapped, grab the token and attempt to bootstrap the user
+        response = vaultService.bootstrapUser(response.getBody().toString());
+
+        Assertions.assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void cicdGetTest() {
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("X-CICD-TOKEN", CICD_TOKEN);
+
+        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
+        RequestContextHolder.setRequestAttributes(attrs);
+
+        ResponseEntity<?> response = vaultService.cicdGet(testService.getName(), testEnvironment.getName());
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
     }// Integration function end: Auth
 }
