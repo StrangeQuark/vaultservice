@@ -1099,7 +1099,7 @@ public class VaultService {
             HttpServletRequest request = attrs.getRequest();
             String cicdToken = request.getHeader("X-CICD-TOKEN");
 
-            if (cicdToken == null || !cicdToken.matches(CICD_TOKEN)) {
+            if (cicdToken == null || !cicdToken.equals(CICD_TOKEN)) {
                 throw new RuntimeException("Invalid CICD request token");
             }
 
