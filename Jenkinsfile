@@ -16,7 +16,7 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'vault-env', variable: 'ENV_FILE')]) {
                     script {
-                        sh "cp \"$ENV_FILE\" .env"
+                        sh "cp \"$ENV_FILE\" vaultservice.env"
 //                         bat "copy %ENV_FILE% .env" // For windows runs
                     }
                 }
@@ -27,8 +27,8 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh "docker compose up --build -d"
-//                         bat "docker compose up --build -d" // For windows runs
+                        sh "docker compose --env-file vaultservice.env up --build -d"
+//                         bat "docker compose --env-file vaultservice.env up --build -d" // For windows runs
 
                         def maxRetries = 4 * 10
                         def retryInterval = 15
@@ -64,6 +64,13 @@ pipeline {
                         error("Deployment crashed.")
                     }
                 }
+            }
+        }
+
+        post {
+            always {
+                sh "rm -f vaultservice.env"
+                echo "Cleaned up vaultservice.env"
             }
         }
     }
