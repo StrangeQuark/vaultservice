@@ -66,12 +66,11 @@ pipeline {
                 }
             }
         }
-
-        post {
-            always {
-                sh "rm -f vaultservice.env"
-                echo "Cleaned up vaultservice.env"
-            }
+    }
+    post {
+        always {
+            sh "rm -f vaultservice.env"
+            echo "Cleaned up vaultservice.env"
         }
     }
 }
