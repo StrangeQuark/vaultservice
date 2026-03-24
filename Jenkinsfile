@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'Host PC' }
+    agent { label 'linux-agent' }
 
     stages {
         // Because the vault service cannot request secrets from itself upon start up without extensive initialization
