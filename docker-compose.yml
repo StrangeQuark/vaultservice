@@ -36,7 +36,7 @@ services:
     container_name: vault-db
     restart: unless-stopped
     volumes:
-      - vault-db-volume:/var/lib/postgresql/data/vaultservice
+      - vault-db-volume:/var/lib/postgresql/data
     networks:
       - vaultdb-network
     environment:
