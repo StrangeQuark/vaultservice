@@ -34,6 +34,9 @@ services:
   vault-db:
     image: 'postgres:13.1-alpine'
     container_name: vault-db
+    restart: unless-stopped
+    volumes:
+      - vault-db-volume:/var/lib/postgresql/data/vaultservice
     networks:
       - vaultdb-network
     environment:
@@ -45,3 +48,5 @@ networks:
     external: true
   shared-network:
     external: true
+volumes:
+  vault-db-volume:
