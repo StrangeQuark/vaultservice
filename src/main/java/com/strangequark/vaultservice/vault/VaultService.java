@@ -53,6 +53,8 @@ public class VaultService {
     AuthUtility authUtility;
     @Value("${CICD_TOKEN}")
     private String CICD_TOKEN;
+    @Value("${BOOTSTRAP_TOKEN:}")
+    private String BOOTSTRAP_TOKEN;
     // Integration function end: Auth
     // Integration function start: Telemetry
     @Autowired
@@ -681,6 +683,82 @@ public class VaultService {
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
     }
+
+    @Transactional
+    public ResponseEntity<?> bootstrapEnvFile(String serviceName, String environmentName, MultipartFile file, String bootstrapToken) {
+        LOGGER.info("Attempting to bootstrap env file");
+
+        try {
+            if(BOOTSTRAP_TOKEN.isBlank() || !BOOTSTRAP_TOKEN.equals(bootstrapToken)) {
+                LOGGER.error("Invalid bootstrap token");
+                return ResponseEntity.status(400).body(new ErrorResponse("Invalid bootstrap token"));
+            }
+
+            String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1);
+            if (!fileExtension.equals("env")) {
+                LOGGER.error("File extension is not .env");
+                return ResponseEntity.status(400).body(new ErrorResponse("File extension is not .env"));
+            }
+
+            Service service;
+            Optional<Service> optionalService = serviceRepository.findByName(serviceName);
+
+            if(optionalService.isPresent()) {
+                service = optionalService.get();
+            } else {
+                service = new Service();
+                service.setName(serviceName);
+                serviceRepository.save(service);
+            }
+
+            if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
+                LOGGER.error("Environment creation failed during bootstrap - That environment name already exists");
+                return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists"));
+            }
+
+            // Create the env
+            Environment environment = new Environment();
+            environment.setName(environmentName);
+            environment.setService(service);
+            environmentRepository.save(environment);
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+            String line;
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                // Skip empty lines and comments
+                if (line.isEmpty() || line.startsWith("#")) continue;
+
+                int equalsIndex = line.indexOf('=');
+                if (equalsIndex == -1) continue; // Skip invalid lines
+
+                String key = line.substring(0, equalsIndex).trim();
+                String value = line.substring(equalsIndex + 1).trim();
+
+                Variable variable = new Variable();
+                variable.setEnvironment(environment);
+                variable.setKey(key);
+                variable.setValue(value);
+                variableRepository.save(variable);
+            }
+            // Integration function start: Telemetry
+            telemetryUtility.sendTelemetryEvent("vault-bootstrap-env-file", Map.of(
+                            "service-id", service.getId(),
+                            "service-name", service.getName(),
+                            "environment-id", environment.getId(),
+                            "environment-name", environment.getName()
+                    )
+            ); // Integration function end: Telemetry
+
+            LOGGER.info("Env file successfully bootstrapped");
+            return ResponseEntity.ok("Env file successfully bootstrapped");
+        } catch (Exception ex) {
+            LOGGER.error("Failed to bootstrap env file: " + ex.getMessage());
+            LOGGER.debug("Stack trace: ", ex);
+            return ResponseEntity.status(500).body(new ErrorResponse(ex.getMessage()));
+        }
+    }
     // Integration function start: Auth
     @Transactional(readOnly = true)
     public ResponseEntity<?> getUsersByService(String serviceName) {
@@ -985,80 +1063,16 @@ public class VaultService {
     }
 
     @Transactional
-    public ResponseEntity<?> bootstrapEnvFile(String serviceName, String environmentName, MultipartFile file) {
-        LOGGER.info("Attempting to bootstrap env file");
-
-        try {
-            if(serviceRepository.findByName(serviceName).isPresent()) {
-                LOGGER.error("Service creation failed during bootstrap - That service name already exists");
-                return ResponseEntity.status(400).body(new ErrorResponse("Service with that name already exists"));
-            }
-
-            String fileExtension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".") + 1);
-            if (!fileExtension.equals("env")) {
-                LOGGER.error("File extension is not .env");
-                return ResponseEntity.status(400).body(new ErrorResponse("File extension is not .env"));
-            }
-
-            // Create the service
-            Service service = new Service();
-            service.setName(serviceName);
-            serviceRepository.save(service);
-
-            // Create the env
-            Environment environment = new Environment();
-            environment.setName(environmentName);
-            environment.setService(service);
-            environmentRepository.save(environment);
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                // Skip empty lines and comments
-                if (line.isEmpty() || line.startsWith("#")) continue;
-
-                int equalsIndex = line.indexOf('=');
-                if (equalsIndex == -1) continue; // Skip invalid lines
-
-                String key = line.substring(0, equalsIndex).trim();
-                String value = line.substring(equalsIndex + 1).trim();
-
-                Variable variable = new Variable();
-                variable.setEnvironment(environment);
-                variable.setKey(key);
-                variable.setValue(value);
-                variableRepository.save(variable);
-            }
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-bootstrap-env-file", Map.of(
-                            "service-id", service.getId(),
-                            "service-name", service.getName(),
-                            "environment-id", environment.getId(),
-                            "environment-name", environment.getName()
-                    )
-            ); // Integration function end: Telemetry
-
-            LOGGER.info("Env file successfully bootstrapped");
-            return ResponseEntity.ok(jwtUtility.generateBootstrapToken(serviceName));
-        } catch (Exception ex) {
-            LOGGER.error("Failed to bootstrap env file: " + ex.getMessage());
-            LOGGER.debug("Stack trace: ", ex);
-            return ResponseEntity.status(500).body(new ErrorResponse(ex.getMessage()));
-        }
-    }
-
-    @Transactional
-    public ResponseEntity<?> bootstrapUser(String token) {
+    public ResponseEntity<?> bootstrapUser(String serviceName, String bootstrapToken) {
         LOGGER.info("Attempting to bootstrap user to service");
 
         try {
-            if(!jwtUtility.isTokenValid(token)) {
-                throw new RuntimeException("Bootstrap token is invalid");
+            if(BOOTSTRAP_TOKEN.isBlank() || !BOOTSTRAP_TOKEN.equals(bootstrapToken)) {
+                LOGGER.error("Invalid bootstrap token");
+                return ResponseEntity.status(400).body(new ErrorResponse("Invalid bootstrap token"));
             }
 
-            Service service = serviceRepository.findByName(jwtUtility.extractSubject(token))
+            Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
             if(serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId()).isPresent()) {
