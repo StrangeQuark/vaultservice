@@ -164,6 +164,51 @@ public class VaultServiceTest extends BaseServiceTest {
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(serviceRepository.findByName(testService.getName()).isEmpty());
     }
+
+    @Test
+    void bootstrapEnvFileTest() {
+        String fileContent = "FOO=bar\nTEST=val1\n";
+
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
+        );
+
+        ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile, BOOTSTRAP_TOKEN);
+
+        String responseBody = response.getBody().toString();
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals("Env file successfully bootstrapped", responseBody);
+    }
+
+    @Test
+    void bootstrapEnvFileRejectsInvalidTokenTest() {
+        String fileContent = "FOO=bar\nTEST=val1\n";
+
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
+        );
+
+        ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile, "invalidBootstrapToken");
+
+        Assertions.assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void bootstrapEnvFileAddsEnvironmentToExistingServiceTest() {
+        String fileContent = "FOO=bar\nTEST=val1\n";
+
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
+        );
+
+        ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile, BOOTSTRAP_TOKEN);
+        Assertions.assertEquals(200, response.getStatusCode().value());
+
+        response = vaultService.bootstrapEnvFile(testBootstrapService, "testBootstrapEnvironment", mockFile, BOOTSTRAP_TOKEN);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+    }
     // Integration function start: Auth
     @Test
     void getAllServicesTest() {
@@ -266,23 +311,6 @@ public class VaultServiceTest extends BaseServiceTest {
     }
 
     @Test
-    void bootstrapEnvFileTest() {
-        String fileContent = "FOO=bar\nTEST=val1\n";
-
-        MockMultipartFile mockFile = new MockMultipartFile(
-                "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
-        );
-
-        ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile);
-
-        String responseBody = response.getBody().toString();
-
-        Assertions.assertEquals(200, response.getStatusCode().value());
-        Assertions.assertEquals(testBootstrapToken, responseBody, "Invalid test return. " +
-                "Expected " + testBootstrapToken + " but got " + responseBody);
-    }
-
-    @Test
     void bootstrapUserTest() {
         String fileContent = "FOO=bar\nTEST=val1\n";
 
@@ -290,18 +318,12 @@ public class VaultServiceTest extends BaseServiceTest {
                 "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
         );
 
-        ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile);
+        ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile, BOOTSTRAP_TOKEN);
+        Assertions.assertEquals(200, response.getStatusCode().value());
 
-        String responseBody = response.getBody().toString();
+        response = vaultService.bootstrapUser(testBootstrapService, BOOTSTRAP_TOKEN);
 
         Assertions.assertEquals(200, response.getStatusCode().value());
-        Assertions.assertEquals(testBootstrapToken, responseBody, "Invalid test return. " +
-                "Expected " + testBootstrapToken + " but got " + responseBody);
-
-        // Once env file is bootstrapped, grab the token and attempt to bootstrap the user
-        response = vaultService.bootstrapUser(response.getBody().toString());
-
-        Assertions.assertEquals(400, response.getStatusCode().value());
     }
 
     @Test

@@ -890,8 +890,9 @@
 				"method": "POST",
 				"header": [
 					{
-						"key": "Content-Type",
-						"value": "application/json"
+						"key": "X-VAULT-BOOTSTRAP-TOKEN",
+						"value": "{{BOOTSTRAP_TOKEN}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -939,12 +940,13 @@
 				"method": "POST",
 				"header": [
 					{
-						"key": "Content-Type",
-						"value": "application/json"
+						"key": "X-VAULT-BOOTSTRAP-TOKEN",
+						"value": "{{BOOTSTRAP_TOKEN}}",
+						"type": "text"
 					}
 				],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/bootstrap/bootstrap-user/jwtTokenHere",
+					"raw": "http://localhost:6020/api/vault/bootstrap/bootstrap-user/testBootstrapService",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -955,7 +957,7 @@
 						"vault",
 						"bootstrap",
 						"bootstrap-user",
-						"jwtTokenHere"
+						"testBootstrapService"
 					]
 				}
 			},

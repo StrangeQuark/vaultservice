@@ -43,6 +43,8 @@ public abstract class BaseServiceTest {
     public Service testService;
     public Environment testEnvironment;
     public Variable testVariable;
+    @Value("${BOOTSTRAP_TOKEN}")
+    public String BOOTSTRAP_TOKEN;
     // Integration function start: Auth
     @Value("${CICD_TOKEN}")
     public String CICD_TOKEN;
@@ -56,7 +58,6 @@ public abstract class BaseServiceTest {
     public UUID testUserId = UUID.randomUUID();
     public ServiceUser serviceUser;
     public String testBootstrapService = "testBootstrapService";
-    public String testBootstrapToken = "testBootstrapToken";
     // Integration function end: Auth
 
     @BeforeEach
@@ -75,9 +76,6 @@ public abstract class BaseServiceTest {
 
             // Mock authUtility functions
             when(jwtUtility.extractId()).thenReturn(testOwnerId.toString());
-            when(jwtUtility.generateBootstrapToken(testBootstrapService)).thenReturn(testBootstrapToken);
-            when(jwtUtility.isTokenValid(testBootstrapToken)).thenReturn(true);
-            when(jwtUtility.extractSubject(testBootstrapToken)).thenReturn(testService.getName());
             when(authUtility.getUserId("testUser")).thenReturn(testUserId.toString());// Integration function end: Auth
         } catch (Exception ex) {
             ex.printStackTrace();

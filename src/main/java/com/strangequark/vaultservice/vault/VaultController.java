@@ -127,6 +127,15 @@ public class VaultController {
     public ResponseEntity<?> getAllServices() {
         return vaultService.getAllServices();
     }
+
+    @PostMapping("/bootstrap/add-env/{serviceName}/{environmentName}")
+    public ResponseEntity<?> bootstrapEnvFile(
+            @PathVariable String serviceName,
+            @PathVariable String environmentName,
+            @RequestHeader("X-VAULT-BOOTSTRAP-TOKEN") String bootstrapToken,
+            @RequestParam("file") MultipartFile file) {
+        return vaultService.bootstrapEnvFile(serviceName, environmentName, file, bootstrapToken);
+    }
     // Integration function start: Auth
     @GetMapping("/get-users-by-service/{serviceName}")
     public ResponseEntity<?> getUsersByService(@PathVariable String serviceName) {
@@ -163,17 +172,11 @@ public class VaultController {
         return vaultService.deleteUserFromAllServices(serviceUserRequest);
     }
 
-    @PostMapping("/bootstrap/add-env/{serviceName}/{environmentName}")
-    public ResponseEntity<?> bootstrapEnvFile(
+    @PostMapping("/bootstrap/bootstrap-user/{serviceName}")
+    public ResponseEntity<?> bootstrapUser(
             @PathVariable String serviceName,
-            @PathVariable String environmentName,
-            @RequestParam("file") MultipartFile file) {
-        return vaultService.bootstrapEnvFile(serviceName, environmentName, file);
-    }
-
-    @PostMapping("/bootstrap/bootstrap-user/{token}")
-    public ResponseEntity<?> bootstrapUser(@PathVariable String token) {
-        return vaultService.bootstrapUser(token);
+            @RequestHeader("X-VAULT-BOOTSTRAP-TOKEN") String bootstrapToken) {
+        return vaultService.bootstrapUser(serviceName, bootstrapToken);
     }
 
     @GetMapping("/cicd/{serviceName}/{environmentName}")
