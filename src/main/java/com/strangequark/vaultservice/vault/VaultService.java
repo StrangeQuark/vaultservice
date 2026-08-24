@@ -7,6 +7,7 @@ import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line
 import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserResponse; // Integration line: Auth
 import com.strangequark.vaultservice.utility.AuthUtility;// Integration line: Auth
 import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Auth
 import com.strangequark.vaultservice.utility.TelemetryUtility;// Integration line: Telemetry
@@ -768,7 +769,16 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            List<ServiceUser> users = serviceUserRepository.findAllByServiceId(service.getId());
+            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+
+            if(requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER)
+                throw new RuntimeException("Only service users with OWNER or MANAGER roles can view service users");
+
+            List<ServiceUserResponse> users = serviceUserRepository.findAllByServiceId(service.getId())
+                    .stream()
+                    .map(user -> new ServiceUserResponse(user.getUserId(), user.getRole()))
+                    .toList();
 
             LOGGER.debug("User list retrieval successful");
             return ResponseEntity.ok(users);
