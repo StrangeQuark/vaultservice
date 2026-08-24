@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +50,21 @@ public class JwtUtility {
         HttpServletRequest request = attrs.getRequest();
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Missing or invalid Authorization header");
+        if(authHeader != null && authHeader.startsWith("Bearer ")) {
+            LOGGER.debug("Token successfully retrieved from header");
+            return authHeader.substring(7);
         }
 
-        LOGGER.debug("Token successfully retrieved from header");
-        return authHeader.substring(7); // Remove "Bearer "
+        if(request.getCookies() != null) {
+            for(Cookie cookie : request.getCookies()) {
+                if(cookie.getName().equals("access_token") && !cookie.getValue().isBlank()) {
+                    LOGGER.debug("Token successfully retrieved from cookie");
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        throw new RuntimeException("Missing or invalid Authorization header and access_token cookie");
     }
 
     // Integration function start: Telemetry
