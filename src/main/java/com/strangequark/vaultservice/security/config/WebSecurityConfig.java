@@ -34,7 +34,7 @@ public class WebSecurityConfig {
                                 "/api/vault/bootstrap/add-env/**",
                                 "/api/vault/cicd/**"
                         ).permitAll()
-                        .requestMatchers("/api/**").authenticated() // Integration line: Auth
+                        .requestMatchers("/api/**").hasAuthority("VAULT_API_ACCESS") // Integration line: Auth
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
