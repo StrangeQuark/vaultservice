@@ -3,6 +3,7 @@ package com.strangequark.vaultservice.servicetests;
 import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserResponse; // Integration line: Auth
 import com.strangequark.vaultservice.variable.Variable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays; // Integration line: Auth
 import java.util.List;
+import java.util.UUID; // Integration line: Auth
+
+import static org.mockito.Mockito.when; // Integration line: Auth
 
 public class VaultServiceTest extends BaseServiceTest {
     @Test
@@ -224,10 +228,29 @@ public class VaultServiceTest extends BaseServiceTest {
     void getUsersByServiceTest() {
         ResponseEntity<?> response = vaultService.getUsersByService(testService.getName());
 
-        List<ServiceUser> users = (List<ServiceUser>) response.getBody();
+        List<ServiceUserResponse> users = (List<ServiceUserResponse>) response.getBody();
 
         Assertions.assertEquals(200, response.getStatusCode().value());
-        Assertions.assertTrue(users.stream().anyMatch(u -> u.getId().equals(serviceUser.getId())));
+        Assertions.assertTrue(users.stream().anyMatch(u -> u.getUserId().equals(serviceUser.getUserId())));
+    }
+
+    @Test
+    void getUsersByServiceAllowsManagerTest() {
+        serviceUserRepository.save(new ServiceUser(testService, testUserId, ServiceUserRole.MANAGER));
+        when(jwtUtility.extractId()).thenReturn(testUserId.toString());
+
+        ResponseEntity<?> response = vaultService.getUsersByService(testService.getName());
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+    }
+
+    @Test
+    void getUsersByServiceRejectsNonMemberTest() {
+        when(jwtUtility.extractId()).thenReturn(UUID.randomUUID().toString());
+
+        ResponseEntity<?> response = vaultService.getUsersByService(testService.getName());
+
+        Assertions.assertEquals(400, response.getStatusCode().value());
     }
 
     @Test

@@ -25,7 +25,8 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - CICD_TOKEN=${CICD_TOKEN} # Integration line: Auth
       - BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN}
-      - ACCESS_SECRET_KEY=${ACCESS_SECRET_KEY} # Integration line: Auth
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY} # Integration line: Auth
+      - JWT_ISSUER=${JWT_ISSUER} # Integration line: Auth
       - SERVICE_SECRET_VAULT=${SERVICE_SECRET_VAULT} # Integration line: Auth
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:6020/api/vault/health" ]
