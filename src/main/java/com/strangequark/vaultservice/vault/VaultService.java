@@ -25,6 +25,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
@@ -634,7 +635,7 @@ public class VaultService {
         try {
             LOGGER.info("Attempting to delete service");
 
-            Service service = serviceRepository.findByName(serviceName)
+            Service service = serviceRepository.findByNameForUpdate(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
             //Integration function start: Auth
@@ -658,6 +659,7 @@ public class VaultService {
             LOGGER.info("Service successfully deleted");
             return ResponseEntity.ok("Service successfully deleted");
         } catch (Exception ex) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             LOGGER.error("Failed to delete service: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
@@ -821,7 +823,7 @@ public class VaultService {
         LOGGER.info("Attempting to update user's role");
 
         try {
-            Service service = serviceRepository.findByName(serviceUserRequest.getServiceName())
+            Service service = serviceRepository.findByNameForUpdate(serviceUserRequest.getServiceName())
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
             ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
@@ -878,6 +880,7 @@ public class VaultService {
             LOGGER.info("User role successfully updated");
             return ResponseEntity.ok("User role successfully updated");
         } catch (Exception ex) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             LOGGER.error("Failed to update user role: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
@@ -889,7 +892,7 @@ public class VaultService {
         LOGGER.info("Attempting to add user to service");
 
         try {
-            Service service = serviceRepository.findByName(serviceUserRequest.getServiceName())
+            Service service = serviceRepository.findByNameForUpdate(serviceUserRequest.getServiceName())
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
             ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
@@ -926,6 +929,7 @@ public class VaultService {
             LOGGER.info("User successfully added to service");
             return ResponseEntity.ok("User successfully added to service");
         } catch (Exception ex) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             LOGGER.error("Failed to add user to service: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
@@ -937,7 +941,7 @@ public class VaultService {
         LOGGER.info("Attempting to delete user from service");
 
         try {
-            Service service = serviceRepository.findByName(serviceUserRequest.getServiceName())
+            Service service = serviceRepository.findByNameForUpdate(serviceUserRequest.getServiceName())
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
             ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
@@ -984,6 +988,7 @@ public class VaultService {
             LOGGER.info("User successfully deleted from service");
             return ResponseEntity.ok("User successfully deleted from service");
         } catch(RuntimeException ex) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             LOGGER.error("Failed to delete user from service: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
@@ -1002,9 +1007,10 @@ public class VaultService {
             }
             UUID userId = UUID.fromString(userIdStr);
 
-            List<Service> services = serviceUserRepository.findServicesByUserId(userId);
+            List<Service> services = serviceUserRepository.findServicesByUserIdForUpdate(userId);
 
             List<Map<String, String>> errors = new ArrayList<>();
+            List<Service> servicesToDelete = new ArrayList<>();
 
             for(Service service : services) {
                 ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
@@ -1040,7 +1046,7 @@ public class VaultService {
                     if (ownerCount <= 1) {
                         // If the user being deleted is the only user in the service, just delete the service
                         if(service.getServiceUsers().size() == 1)
-                            serviceRepository.delete(service);
+                            servicesToDelete.add(service);
                         else
                             errors.add(Map.of(service.getName(), "Cannot remove the last OWNER from the service"));
                     }
@@ -1053,8 +1059,12 @@ public class VaultService {
                 return ResponseEntity.status(400).body(errors);
             }
 
+            for(Service service : servicesToDelete)
+                serviceRepository.delete(service);
+
             for(Service service : services) {
-                serviceUserRepository.deleteServiceUser(userId, service.getId());
+                if(!servicesToDelete.contains(service))
+                    serviceUserRepository.deleteServiceUser(userId, service.getId());
             }
             // Integration function start: Telemetry
             telemetryUtility.sendTelemetryEvent("vault-delete-user-from-all-services", Map.of(
@@ -1066,6 +1076,7 @@ public class VaultService {
             LOGGER.info("User successfully deleted from all services");
             return ResponseEntity.ok("User successfully deleted from all services");
         } catch(RuntimeException ex) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             LOGGER.error("Failed to delete user from all services: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));

@@ -3,7 +3,9 @@
 package com.strangequark.vaultservice.serviceuser;
 
 import com.strangequark.vaultservice.service.Service;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,10 @@ public interface ServiceUserRepository extends JpaRepository<ServiceUser, UUID> 
 
     @Query("SELECT su.service FROM ServiceUser su WHERE su.userId = :userId")
     List<Service> findServicesByUserId(UUID userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT su.service FROM ServiceUser su WHERE su.userId = :userId ORDER BY su.service.id")
+    List<Service> findServicesByUserIdForUpdate(UUID userId);
 
     List<ServiceUser> findAllByServiceId(UUID serviceId);
 

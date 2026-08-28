@@ -1,5 +1,6 @@
 package com.strangequark.vaultservice.servicetests;
 
+import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
@@ -331,6 +332,40 @@ public class VaultServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isEmpty());
+    }
+
+    @Test
+    void deleteUserFromAllServicesDoesNotPartiallyDeleteTest() {
+        Service protectedService = new Service("protectedService_" + UUID.randomUUID());
+        serviceRepository.save(protectedService);
+
+        serviceUserRepository.save(new ServiceUser(
+                protectedService,
+                testOwnerId,
+                ServiceUserRole.OWNER
+        ));
+        serviceUserRepository.save(new ServiceUser(
+                protectedService,
+                UUID.randomUUID(),
+                ServiceUserRole.MAINTAINER
+        ));
+
+        when(authUtility.getUserId("testUser")).thenReturn(testOwnerId.toString());
+
+        ServiceUserRequest serviceUserRequest = new ServiceUserRequest();
+        serviceUserRequest.setUsername("testUser");
+
+        ResponseEntity<?> response = vaultService.deleteUserFromAllServices(serviceUserRequest);
+
+        Assertions.assertEquals(400, response.getStatusCode().value());
+        Assertions.assertTrue(serviceRepository.findByName(testService.getName()).isPresent());
+        Assertions.assertTrue(serviceUserRepository
+                .findByUserIdAndServiceId(testOwnerId, testService.getId())
+                .isPresent());
+        Assertions.assertTrue(serviceRepository.findByName(protectedService.getName()).isPresent());
+        Assertions.assertTrue(serviceUserRepository
+                .findByUserIdAndServiceId(testOwnerId, protectedService.getId())
+                .isPresent());
     }
 
     @Test
