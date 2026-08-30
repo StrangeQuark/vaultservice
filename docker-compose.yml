@@ -7,6 +7,9 @@ services:
     ports:
       - "6020:6020"
     container_name: vault-service
+    labels:
+      com.msinit.log: "true"
+      com.msinit.service-name: "vaultservice"
     depends_on:
       - vault-db
     environment:
