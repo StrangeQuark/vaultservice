@@ -44,7 +44,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/create-service/testService",
+					"raw": "http://localhost:6020/api/vault/create-service",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -53,9 +53,17 @@
 					"path": [
 						"api",
 						"vault",
-						"create-service",
-						"testService"
+						"create-service"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -76,7 +84,7 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/create-environment/testService/e3",
+					"raw": "http://localhost:6020/api/vault/create-environment",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -85,10 +93,17 @@
 					"path": [
 						"api",
 						"vault",
-						"create-environment",
-						"testService",
-						"e3"
+						"create-environment"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -106,10 +121,10 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/get-service/testService",
+					"raw": "http://localhost:6020/api/vault/get-service",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -118,9 +133,17 @@
 					"path": [
 						"api",
 						"vault",
-						"get-service",
-						"testService"
+						"get-service"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -138,10 +161,10 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/get-environments-by-service/testService",
+					"raw": "http://localhost:6020/api/vault/get-environments-by-service",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -150,9 +173,17 @@
 					"path": [
 						"api",
 						"vault",
-						"get-environments-by-service",
-						"testService"
+						"get-environments-by-service"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -170,10 +201,10 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/get-environment/testService/e3",
+					"raw": "http://localhost:6020/api/vault/get-environment",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -182,10 +213,17 @@
 					"path": [
 						"api",
 						"vault",
-						"get-environment",
-						"testService",
-						"e3"
+						"get-environment"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -203,10 +241,10 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/get-variables-by-service/testService",
+					"raw": "http://localhost:6020/api/vault/get-variables-by-service",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -215,9 +253,17 @@
 					"path": [
 						"api",
 						"vault",
-						"get-variables-by-service",
-						"testService"
+						"get-variables-by-service"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -235,10 +281,10 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/get-variables-by-environment/testService/e3",
+					"raw": "http://localhost:6020/api/vault/get-variables-by-environment",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -247,10 +293,17 @@
 					"path": [
 						"api",
 						"vault",
-						"get-variables-by-environment",
-						"testService",
-						"e3"
+						"get-variables-by-environment"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -268,10 +321,10 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/get-variable-by-name/testService/e3/abc2",
+					"raw": "http://localhost:6020/api/vault/get-variable-by-name",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -280,11 +333,17 @@
 					"path": [
 						"api",
 						"vault",
-						"get-variable-by-name",
-						"testService",
-						"e3",
-						"abc2"
+						"get-variable-by-name"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\",\n    \"variableName\": \"abc2\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -311,10 +370,15 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"key\": \"abc2\",\n    \"value\": \"aa2\"\n}"
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\",\n    \"variable\": {\n        \"key\": \"abc2\",\n        \"value\": \"value\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "http://localhost:6020/api/vault/add-variable/testService/e3",
+					"raw": "http://localhost:6020/api/vault/add-variable",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -323,9 +387,7 @@
 					"path": [
 						"api",
 						"vault",
-						"add-variable",
-						"testService",
-						"e3"
+						"add-variable"
 					]
 				}
 			},
@@ -353,10 +415,15 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"key\": \"abc2\",\n    \"value\": \"abcdefg\"\n}"
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\",\n    \"variable\": {\n        \"key\": \"abc2\",\n        \"value\": \"value\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "http://localhost:6020/api/vault/update-variable/testService/e3",
+					"raw": "http://localhost:6020/api/vault/update-variable",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -365,9 +432,7 @@
 					"path": [
 						"api",
 						"vault",
-						"update-variable",
-						"testService",
-						"e3"
+						"update-variable"
 					]
 				}
 			},
@@ -395,10 +460,15 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "[\n    {\n        \"key\": \"abc2\",\n        \"value\": \"abcdefg\"\n    }\n]"
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\",\n    \"variables\": [\n        {\n            \"key\": \"abc2\",\n            \"value\": \"value\"\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "http://localhost:6020/api/vault/update-variables/testService/e3",
+					"raw": "http://localhost:6020/api/vault/update-variables",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -407,9 +477,7 @@
 					"path": [
 						"api",
 						"vault",
-						"update-variables",
-						"testService",
-						"e3"
+						"update-variables"
 					]
 				}
 			},
@@ -442,11 +510,21 @@
 							"key": "file",
 							"type": "file",
 							"src": []
+						},
+						{
+							"key": "serviceName",
+							"value": "testService",
+							"type": "text"
+						},
+						{
+							"key": "environmentName",
+							"value": "e3",
+							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "http://localhost:6020/api/vault/add-env-file/testService/e3",
+					"raw": "http://localhost:6020/api/vault/add-env-file",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -455,9 +533,7 @@
 					"path": [
 						"api",
 						"vault",
-						"add-env-file",
-						"testService",
-						"e3"
+						"add-env-file"
 					]
 				}
 			},
@@ -476,10 +552,10 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/download-env-file/testService/e3",
+					"raw": "http://localhost:6020/api/vault/download-env-file",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -488,10 +564,17 @@
 					"path": [
 						"api",
 						"vault",
-						"download-env-file",
-						"testService",
-						"e3"
+						"download-env-file"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -512,7 +595,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/delete-variable/testService/e3/abc2",
+					"raw": "http://localhost:6020/api/vault/delete-variable",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -521,11 +604,17 @@
 					"path": [
 						"api",
 						"vault",
-						"delete-variable",
-						"testService",
-						"e3",
-						"abc2"
+						"delete-variable"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\",\n    \"variableName\": \"abc2\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -546,7 +635,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/delete-environment/testService/e3",
+					"raw": "http://localhost:6020/api/vault/delete-environment",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -555,10 +644,17 @@
 					"path": [
 						"api",
 						"vault",
-						"delete-environment",
-						"testService",
-						"e3"
+						"delete-environment"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\",\n    \"environmentName\": \"e3\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -579,7 +675,7 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/delete-service/testService",
+					"raw": "http://localhost:6020/api/vault/delete-service",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -588,9 +684,17 @@
 					"path": [
 						"api",
 						"vault",
-						"delete-service",
-						"testService"
+						"delete-service"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -902,11 +1006,21 @@
 							"key": "file",
 							"type": "file",
 							"src": "/home/strangequark/Music/t.env"
+						},
+						{
+							"key": "serviceName",
+							"value": "testBootstrapService",
+							"type": "text"
+						},
+						{
+							"key": "environmentName",
+							"value": "testBootstrapEnv",
+							"type": "text"
 						}
 					]
 				},
 				"url": {
-					"raw": "http://localhost:6020/api/vault/bootstrap/add-env/testBootstrapService/testBootstrapEnv",
+					"raw": "http://localhost:6020/api/vault/bootstrap/add-env",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -916,9 +1030,7 @@
 						"api",
 						"vault",
 						"bootstrap",
-						"add-env",
-						"testBootstrapService",
-						"testBootstrapEnv"
+						"add-env"
 					]
 				}
 			},
@@ -946,7 +1058,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/bootstrap/bootstrap-user/testBootstrapService",
+					"raw": "http://localhost:6020/api/vault/bootstrap/bootstrap-user",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -956,9 +1068,17 @@
 						"api",
 						"vault",
 						"bootstrap",
-						"bootstrap-user",
-						"testBootstrapService"
+						"bootstrap-user"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testBootstrapService\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
@@ -969,7 +1089,7 @@
 				"auth": {
 					"type": "noauth"
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [
 					{
 						"key": "X-CICD-TOKEN",
@@ -978,7 +1098,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:6020/api/vault/cicd/testBootstrapService/testBootstrapEnv",
+					"raw": "http://localhost:6020/api/vault/cicd",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -987,10 +1107,17 @@
 					"path": [
 						"api",
 						"vault",
-						"cicd",
-						"testBootstrapService",
-						"testBootstrapEnv"
+						"cicd"
 					]
+				},
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testBootstrapService\",\n    \"environmentName\": \"testBootstrapEnv\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				}
 			},
 			"response": []
