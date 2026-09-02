@@ -17,110 +17,87 @@ public class VaultController {
     @Autowired
     private VaultService vaultService;
 
-    @PostMapping("/create-service/{serviceName}")
-    public ResponseEntity<?> createService(@PathVariable String serviceName) {
-        return vaultService.createService(serviceName);
+    @PostMapping("/create-service")
+    public ResponseEntity<?> createService(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.createService(vaultRequest.getServiceName());
     }
 
-    @PostMapping("/create-environment/{serviceName}/{environmentName}")
-    public ResponseEntity<?> createEnvironment(@PathVariable String serviceName, @PathVariable String environmentName) {
-        return vaultService.createEnvironment(serviceName, environmentName);
+    @PostMapping("/create-environment")
+    public ResponseEntity<?> createEnvironment(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.createEnvironment(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName());
     }
 
-    @GetMapping("/get-service/{serviceName}")
-    public ResponseEntity<?> getService(@PathVariable String serviceName) {
-        return vaultService.getService(serviceName);
+    @PostMapping("/get-service")
+    public ResponseEntity<?> getService(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.getService(vaultRequest.getServiceName());
     }
 
-    @GetMapping("/get-environments-by-service/{serviceName}")
-    public ResponseEntity<?> getEnvironmentsByService(@PathVariable String serviceName) {
-        return vaultService.getEnvironmentsByService(serviceName);
+    @PostMapping("/get-environments-by-service")
+    public ResponseEntity<?> getEnvironmentsByService(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.getEnvironmentsByService(vaultRequest.getServiceName());
     }
 
-    @GetMapping("/get-environment/{serviceName}/{environmentName}")
-    public ResponseEntity<?> getEnvironment(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName) {
-        return vaultService.getEnvironment(serviceName, environmentName);
+    @PostMapping("/get-environment")
+    public ResponseEntity<?> getEnvironment(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.getEnvironment(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName());
     }
 
-    @GetMapping("/get-variables-by-service/{serviceName}")
-    public ResponseEntity<?> getVariablesByService(@PathVariable String serviceName) {
-        return vaultService.getVariablesByService(serviceName);
+    @PostMapping("/get-variables-by-service")
+    public ResponseEntity<?> getVariablesByService(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.getVariablesByService(vaultRequest.getServiceName());
     }
 
-    @GetMapping("/get-variables-by-environment/{serviceName}/{environmentName}")
-    public ResponseEntity<?> getVariablesByEnvironment(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName) {
-        return vaultService.getVariablesByEnvironment(serviceName, environmentName);
+    @PostMapping("/get-variables-by-environment")
+    public ResponseEntity<?> getVariablesByEnvironment(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.getVariablesByEnvironment(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName());
     }
 
-    @GetMapping("/get-variable-by-name/{serviceName}/{environmentName}/{variableName}")
-    public ResponseEntity<?> getVariableByName(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName,
-            @PathVariable String variableName) {
-        return vaultService.getVariableByName(serviceName, environmentName, variableName);
+    @PostMapping("/get-variable-by-name")
+    public ResponseEntity<?> getVariableByName(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.getVariableByName(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName(), vaultRequest.getVariableName());
     }
 
-    @PostMapping("/add-variable/{serviceName}/{environmentName}")
-    public ResponseEntity<?> addVariable(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName,
-            @RequestBody Variable variable) {
-        return vaultService.addVariable(serviceName, environmentName, variable);
+    @PostMapping("/add-variable")
+    public ResponseEntity<?> addVariable(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.addVariable(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName(), vaultRequest.getVariable());
     }
 
-    @PostMapping("/update-variable/{serviceName}/{environmentName}")
-    public ResponseEntity<?> updateVariable(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName,
-            @RequestBody Variable variable) {
-        return vaultService.updateVariable(serviceName, environmentName, variable);
+    @PostMapping("/update-variable")
+    public ResponseEntity<?> updateVariable(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.updateVariable(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName(), vaultRequest.getVariable());
     }
 
-    @PostMapping("/update-variables/{serviceName}/{environmentName}")
-    public ResponseEntity<?> updateVariables(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName,
-            @RequestBody List<Variable> variables) {
-        return vaultService.updateVariables(serviceName, environmentName, variables);
+    @PostMapping("/update-variables")
+    public ResponseEntity<?> updateVariables(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.updateVariables(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName(), vaultRequest.getVariables());
     }
 
-    @PostMapping("/add-env-file/{serviceName}/{environmentName}")
+    @PostMapping("/add-env-file")
     public ResponseEntity<?> addEnvFile(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName,
+            @RequestParam String serviceName,
+            @RequestParam String environmentName,
             @RequestParam("file") MultipartFile file) {
         return vaultService.addEnvFile(serviceName, environmentName, file);
     }
 
-    @GetMapping("/download-env-file/{serviceName}/{environmentName}")
-    public ResponseEntity<?> downloadEnvFile(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName) {
-        return vaultService.downloadEnvFile(serviceName, environmentName);
+    @PostMapping("/download-env-file")
+    public ResponseEntity<?> downloadEnvFile(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.downloadEnvFile(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName());
     }
 
-    @DeleteMapping("/delete-variable/{serviceName}/{environmentName}/{variableName}")
-    public ResponseEntity<?> deleteVariable(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName,
-            @PathVariable String variableName) {
-        return vaultService.deleteVariable(serviceName, environmentName, variableName);
+    @DeleteMapping("/delete-variable")
+    public ResponseEntity<?> deleteVariable(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.deleteVariable(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName(), vaultRequest.getVariableName());
     }
 
-    @DeleteMapping("/delete-environment/{serviceName}/{environmentName}")
-    public ResponseEntity<?> deleteEnvironment(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName) {
-        return vaultService.deleteEnvironment(serviceName, environmentName);
+    @DeleteMapping("/delete-environment")
+    public ResponseEntity<?> deleteEnvironment(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.deleteEnvironment(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName());
     }
 
-    @DeleteMapping("/delete-service/{serviceName}")
-    public ResponseEntity<?> deleteService(@PathVariable String serviceName) {
-        return vaultService.deleteService(serviceName);
+    @DeleteMapping("/delete-service")
+    public ResponseEntity<?> deleteService(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.deleteService(vaultRequest.getServiceName());
     }
 
     @GetMapping("/get-all-services")
@@ -128,18 +105,18 @@ public class VaultController {
         return vaultService.getAllServices();
     }
 
-    @PostMapping("/bootstrap/add-env/{serviceName}/{environmentName}")
+    @PostMapping("/bootstrap/add-env")
     public ResponseEntity<?> bootstrapEnvFile(
-            @PathVariable String serviceName,
-            @PathVariable String environmentName,
+            @RequestParam String serviceName,
+            @RequestParam String environmentName,
             @RequestHeader("X-VAULT-BOOTSTRAP-TOKEN") String bootstrapToken,
             @RequestParam("file") MultipartFile file) {
         return vaultService.bootstrapEnvFile(serviceName, environmentName, file, bootstrapToken);
     }
     // Integration function start: Auth
-    @GetMapping("/get-users-by-service/{serviceName}")
-    public ResponseEntity<?> getUsersByService(@PathVariable String serviceName) {
-        return vaultService.getUsersByService(serviceName);
+    @PostMapping("/get-users-by-service")
+    public ResponseEntity<?> getUsersByService(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.getUsersByService(vaultRequest.getServiceName());
     }
 
     @GetMapping("/get-all-roles")
@@ -147,9 +124,9 @@ public class VaultController {
         return vaultService.getAllRoles();
     }
 
-    @GetMapping("/get-current-user-role/{serviceName}")
-    public ResponseEntity<?> getCurrentUserRole(@PathVariable String serviceName) {
-        return vaultService.getCurrentUserRole(serviceName);
+    @PostMapping("/get-current-user-role")
+    public ResponseEntity<?> getCurrentUserRole(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.getCurrentUserRole(vaultRequest.getServiceName());
     }
 
     @PostMapping("/update-user-role")
@@ -172,15 +149,15 @@ public class VaultController {
         return vaultService.deleteUserFromAllServices(serviceUserRequest);
     }
 
-    @PostMapping("/bootstrap/bootstrap-user/{serviceName}")
+    @PostMapping("/bootstrap/bootstrap-user")
     public ResponseEntity<?> bootstrapUser(
-            @PathVariable String serviceName,
+            @RequestBody VaultRequest vaultRequest,
             @RequestHeader("X-VAULT-BOOTSTRAP-TOKEN") String bootstrapToken) {
-        return vaultService.bootstrapUser(serviceName, bootstrapToken);
+        return vaultService.bootstrapUser(vaultRequest.getServiceName(), bootstrapToken);
     }
 
-    @GetMapping("/cicd/{serviceName}/{environmentName}")
-    public ResponseEntity<?> cicdGet(@PathVariable String serviceName, @PathVariable String environmentName) {
-        return vaultService.cicdGet(serviceName, environmentName);
+    @PostMapping("/cicd")
+    public ResponseEntity<?> cicdGet(@RequestBody VaultRequest vaultRequest) {
+        return vaultService.cicdGet(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName());
     }// Integration function end: Auth
 }
