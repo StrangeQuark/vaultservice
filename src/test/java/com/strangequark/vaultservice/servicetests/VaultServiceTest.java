@@ -392,8 +392,28 @@ public class VaultServiceTest extends BaseServiceTest {
         ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
         RequestContextHolder.setRequestAttributes(attrs);
 
+        testVariable.setValue("value=$test\"line\nnext");
+        variableRepository.save(testVariable);
+
         ResponseEntity<?> response = vaultService.cicdGet(testService.getName(), testEnvironment.getName());
 
         Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals("testKey=\"value=$$test\\\"line\\nnext\"\n", response.getBody());
+    }
+
+    @Test
+    void cicdGetInvalidVariableTest() {
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("X-CICD-TOKEN", CICD_TOKEN);
+
+        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
+        RequestContextHolder.setRequestAttributes(attrs);
+
+        testVariable.setKey("TEST=KEY");
+        variableRepository.save(testVariable);
+
+        ResponseEntity<?> response = vaultService.cicdGet(testService.getName(), testEnvironment.getName());
+
+        Assertions.assertEquals(400, response.getStatusCode().value());
     }// Integration function end: Auth
 }
