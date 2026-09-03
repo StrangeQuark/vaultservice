@@ -28,8 +28,8 @@ jobs:
 
           for i in $(seq 1 $max_retries); do
             echo "Health check attempt $i..."
-            if curl -s -f http://localhost:6020/api/vault/health; then
-              echo "Vault service is healthy!"
+            if response=$(curl -sS -f http://localhost:6020/api/vault/health) && [ "$response" = "200 OK" ]; then
+              echo "Vaultservice is healthy"
               success=1
               break
             else
