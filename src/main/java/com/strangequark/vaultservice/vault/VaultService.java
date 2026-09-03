@@ -1145,9 +1145,33 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
             List<Variable> variables = variableRepository.findByEnvironmentId(environment.getId());
+            if(variables.isEmpty()) {
+                throw new RuntimeException("No environment variables found");
+            }
+
+            String envFile = "";
+
+            for(Variable variable : variables) {
+                if(variable.getKey() == null || !variable.getKey().matches("[A-Za-z_][A-Za-z0-9_]*")) {
+                    throw new RuntimeException("Variable key is invalid");
+                }
+
+                if(variable.getValue() == null) {
+                    throw new RuntimeException("Variable value is invalid");
+                }
+
+                String value = variable.getValue()
+                        .replace("\\", "\\\\")
+                        .replace("\"", "\\\"")
+                        .replace("$", "$$")
+                        .replace("\r", "\\r")
+                        .replace("\n", "\\n");
+
+                envFile += variable.getKey() + "=\"" + value + "\"\n";
+            }
 
             LOGGER.info("CICD get success");
-            return ResponseEntity.ok(variables);
+            return ResponseEntity.ok(envFile);
         } catch (Exception ex) {
             LOGGER.error("CICD get failure: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
