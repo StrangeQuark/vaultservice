@@ -141,9 +141,23 @@ public class VaultServiceTest extends BaseServiceTest {
         ByteArrayResource body = (ByteArrayResource) response.getBody();
         String content = new String(body.getByteArray(), StandardCharsets.UTF_8);
 
-        Assertions.assertTrue(content.contains("testKey=testValue"));
-        Assertions.assertTrue(content.contains("FOO=bar"));
-        Assertions.assertTrue(content.contains("TEST=val1"));
+        Assertions.assertTrue(content.contains("testKey=\"testValue\""));
+        Assertions.assertTrue(content.contains("FOO=\"bar\""));
+        Assertions.assertTrue(content.contains("TEST=\"val1\""));
+    }
+
+    @Test
+    void addEnvFileRejectsDuplicateKeysTest() {
+        String fileContent = "FOO=bar\nFOO=val1\n";
+
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
+        );
+
+        ResponseEntity<?> response = vaultService.addEnvFile(testService.getName(), testEnvironment.getName(), mockFile);
+
+        Assertions.assertEquals(400, response.getStatusCode().value());
+        Assertions.assertTrue(variableRepository.findByEnvironmentIdAndKey(testEnvironment.getId(), "FOO").isEmpty());
     }
 
     @Test
@@ -197,6 +211,23 @@ public class VaultServiceTest extends BaseServiceTest {
         ResponseEntity<?> response = vaultService.bootstrapEnvFile(testBootstrapService, testEnvironment.getName(), mockFile, "invalidBootstrapToken");
 
         Assertions.assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void bootstrapEnvFileRejectsDuplicateKeysTest() {
+        String serviceName = "duplicateBootstrapService";
+        String fileContent = "FOO=bar\nFOO=val1\n";
+
+        MockMultipartFile mockFile = new MockMultipartFile(
+                "file", "test.env", "text/plain", fileContent.getBytes(StandardCharsets.UTF_8)
+        );
+
+        ResponseEntity<?> response = vaultService.bootstrapEnvFile(
+                serviceName, testEnvironment.getName(), mockFile, BOOTSTRAP_TOKEN
+        );
+
+        Assertions.assertEquals(400, response.getStatusCode().value());
+        Assertions.assertTrue(serviceRepository.findByName(serviceName).isEmpty());
     }
 
     @Test
@@ -398,7 +429,7 @@ public class VaultServiceTest extends BaseServiceTest {
         ResponseEntity<?> response = vaultService.cicdGet(testService.getName(), testEnvironment.getName());
 
         Assertions.assertEquals(200, response.getStatusCode().value());
-        Assertions.assertEquals("testKey=\"value=$$test\\\"line\\nnext\"\n", response.getBody());
+        Assertions.assertEquals("testKey=\"value=$test\\\"line\\nnext\"\n", response.getBody());
     }
 
     @Test
