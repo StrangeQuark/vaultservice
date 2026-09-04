@@ -70,7 +70,7 @@ public class VaultService {
 
             if(serviceRepository.findByName(serviceName).isPresent()) {
                 LOGGER.error("Service creation failed - That service name already exists");
-                return ResponseEntity.status(400).body(new ErrorResponse("Service with that name already exists"));
+                return ResponseEntity.status(409).body(new ErrorResponse("Service with that name already exists"));
             }
 
             Service service = new Service();
@@ -114,7 +114,7 @@ public class VaultService {
             //Integration function end: Auth
             if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
                 LOGGER.error("Environment creation failed - An environment with that name already exists in this service");
-                return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists in this service"));
+                return ResponseEntity.status(409).body(new ErrorResponse("Environment with that name already exists in this service"));
             }
 
             Environment environment = new Environment();
@@ -301,7 +301,7 @@ public class VaultService {
             //Ensure the variable name doesn't already exist
             if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), variable.getKey()).isPresent()) {
                 LOGGER.error("Variable with that key already exists in this service/environment");
-                return ResponseEntity.status(400).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
+                return ResponseEntity.status(409).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
             }
 
             variable.setEnvironment(environment);
@@ -716,7 +716,7 @@ public class VaultService {
 
             if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
                 LOGGER.error("Environment creation failed during bootstrap - That environment name already exists");
-                return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists"));
+                return ResponseEntity.status(409).body(new ErrorResponse("Environment with that name already exists"));
             }
 
             // Create the env
@@ -911,9 +911,8 @@ public class VaultService {
             UUID userId = UUID.fromString(userIdStr);
 
             // Avoid duplicate users
-            if(serviceUserRepository.findByUserIdAndServiceId(userId, service.getId()).isPresent()) {
-                throw new RuntimeException("User is already part of this service");
-            }
+            if(serviceUserRepository.findByUserIdAndServiceId(userId, service.getId()).isPresent())
+                return ResponseEntity.status(409).body(new ErrorResponse("User is already part of this service"));
 
             service.addUser(new ServiceUser(service, userId, serviceUserRequest.getRole()));
 
@@ -1096,9 +1095,10 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
-            if(serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId()).isPresent()) {
-                throw new RuntimeException("Unable to bootstrap user - user already belongs to service");
-            }
+            if(serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId()).isPresent())
+                return ResponseEntity.status(409).body(
+                        new ErrorResponse("Unable to bootstrap user - user already belongs to service")
+                );
 
             // Add the requesting user to the bootstrapped service as the owner
             service.addUser(new ServiceUser(service, UUID.fromString(jwtUtility.extractId()), ServiceUserRole.OWNER));
