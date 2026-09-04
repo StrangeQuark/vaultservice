@@ -1,6 +1,6 @@
 package com.strangequark.vaultservice.vault;
 
-import com.strangequark.vaultservice.variable.Variable;
+import com.strangequark.vaultservice.variable.VariableRequest;
 
 import java.util.List;
 
@@ -8,8 +8,8 @@ public class VaultRequest {
     private String serviceName;
     private String environmentName;
     private String variableName;
-    private Variable variable;
-    private List<Variable> variables;
+    private VariableRequest variable;
+    private List<VariableRequest> variables;
 
     public String getServiceName() {
         return serviceName;
@@ -35,19 +35,19 @@ public class VaultRequest {
         this.variableName = variableName;
     }
 
-    public Variable getVariable() {
+    public VariableRequest getVariable() {
         return variable;
     }
 
-    public void setVariable(Variable variable) {
+    public void setVariable(VariableRequest variable) {
         this.variable = variable;
     }
 
-    public List<Variable> getVariables() {
+    public List<VariableRequest> getVariables() {
         return variables;
     }
 
-    public void setVariables(List<Variable> variables) {
+    public void setVariables(List<VariableRequest> variables) {
         this.variables = variables;
     }
 }

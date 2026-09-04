@@ -13,6 +13,7 @@ import com.strangequark.vaultservice.utility.DotenvUtility;
 import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Auth
 import com.strangequark.vaultservice.utility.TelemetryUtility;// Integration line: Telemetry
 import com.strangequark.vaultservice.variable.Variable;
+import com.strangequark.vaultservice.variable.VariableRequest;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
@@ -285,7 +286,7 @@ public class VaultService {
     }
 
     @Transactional
-    public ResponseEntity<?> addVariable(String serviceName, String environmentName, Variable variable) {
+    public ResponseEntity<?> addVariable(String serviceName, String environmentName, VariableRequest variableRequest) {
         try {
             LOGGER.info("Attempting to add variable");
 
@@ -299,15 +300,18 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            dotenvUtility.validateKeyAndValue(variable.getKey(), variable.getValue());
+            dotenvUtility.validateKeyAndValue(variableRequest.getKey(), variableRequest.getValue());
 
             //Ensure the variable name doesn't already exist
-            if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), variable.getKey()).isPresent()) {
+            if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableRequest.getKey()).isPresent()) {
                 LOGGER.error("Variable with that key already exists in this service/environment");
                 return ResponseEntity.status(409).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
             }
 
+            Variable variable = new Variable();
             variable.setEnvironment(environment);
+            variable.setKey(variableRequest.getKey());
+            variable.setValue(variableRequest.getValue());
             variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(variable);
             // Integration function start: Telemetry
@@ -330,7 +334,7 @@ public class VaultService {
     }
 
     @Transactional
-    public ResponseEntity<?> updateVariable(String serviceName, String environmentName, Variable variable) {
+    public ResponseEntity<?> updateVariable(String serviceName, String environmentName, VariableRequest variableRequest) {
         try {
             LOGGER.info("Attempting to update variable");
 
@@ -344,12 +348,12 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            dotenvUtility.validateKeyAndValue(variable.getKey(), variable.getValue());
+            dotenvUtility.validateKeyAndValue(variableRequest.getKey(), variableRequest.getValue());
 
-            Variable var = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variable.getKey())
+            Variable var = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableRequest.getKey())
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
-            var.setValue(variable.getValue());
+            var.setValue(variableRequest.getValue());
             var.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(var);
             // Integration function start: Telemetry
@@ -372,7 +376,7 @@ public class VaultService {
     }
 
     @Transactional
-    public ResponseEntity<?> updateVariables(String serviceName, String environmentName, List<Variable> variables) {
+    public ResponseEntity<?> updateVariables(String serviceName, String environmentName, List<VariableRequest> variables) {
         try {
             LOGGER.info("Attempting to update list of variables");
 
@@ -386,12 +390,12 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            for(Variable variable : variables)
+            for(VariableRequest variable : variables)
                 dotenvUtility.validateKeyAndValue(variable.getKey(), variable.getValue());
 
             List<String> skippedVars = new ArrayList<>();
 
-            for(Variable var : variables) {
+            for(VariableRequest var : variables) {
                 if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), var.getKey()).isEmpty()) {
                     skippedVars.add(var.getKey());
                     continue;

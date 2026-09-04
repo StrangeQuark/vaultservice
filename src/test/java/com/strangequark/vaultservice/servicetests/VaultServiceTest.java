@@ -1,11 +1,12 @@
 package com.strangequark.vaultservice.servicetests;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserResponse; // Integration line: Auth
-import com.strangequark.vaultservice.variable.Variable;
+import com.strangequark.vaultservice.variable.VariableRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
@@ -86,16 +87,36 @@ public class VaultServiceTest extends BaseServiceTest {
 
     @Test
     void addVariableTest() {
-        Variable variable = new Variable(testEnvironment, "testKey1", "testValue1");
+        VariableRequest variable = new VariableRequest();
+        variable.setKey("testKey1");
+        variable.setValue("testValue1");
         ResponseEntity<?> response = vaultService.addVariable(testService.getName(), testEnvironment.getName(), variable);
 
         Assertions.assertEquals(200, response.getStatusCode().value());
     }
 
     @Test
+    void variableRequestIgnoresPersistenceFieldsTest() throws Exception {
+        VariableRequest variableRequest = new ObjectMapper().readValue("""
+                {
+                    "id": "9d11e4c4-7284-4b16-a7cd-5912ce374c28",
+                    "environment": {"id": "4f8a3c63-5ed3-4e51-9b39-780663e84bbb"},
+                    "createdAt": "2026-01-01T00:00:00",
+                    "updatedAt": "2026-01-01T00:00:00",
+                    "lastUpdatedBy": "1ee36a11-024c-4234-a75a-34489c2fc0be",
+                    "key": "testKey1",
+                    "value": "testValue1"
+                }
+                """, VariableRequest.class);
+
+        Assertions.assertEquals("testKey1", variableRequest.getKey());
+        Assertions.assertEquals("testValue1", variableRequest.getValue());
+    }
+
+    @Test
     void updateVariableTest() {
         ResponseEntity<?> response = vaultService.updateVariable(testService.getName(), testEnvironment.getName(),
-                new Variable(testEnvironment, testVariable.getKey(), "newValue"));
+                variableRequest(testVariable.getKey(), "newValue"));
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertEquals("newValue", variableRepository.findByEnvironmentIdAndKey(testEnvironment.getId(), testVariable.getKey()).get().getValue());
@@ -103,9 +124,9 @@ public class VaultServiceTest extends BaseServiceTest {
 
     @Test
     void updateVariablesTest() {
-        List<Variable> vars = new ArrayList<>();
-        vars.add(new Variable(testEnvironment, testVariable.getKey(), "newValue"));
-        vars.add(new Variable(testEnvironment, "skippedKey", "skippedValue"));
+        List<VariableRequest> vars = new ArrayList<>();
+        vars.add(variableRequest(testVariable.getKey(), "newValue"));
+        vars.add(variableRequest("skippedKey", "skippedValue"));
 
         ResponseEntity<?> response = vaultService.updateVariables(testService.getName(), testEnvironment.getName(), vars);
 
@@ -130,8 +151,8 @@ public class VaultServiceTest extends BaseServiceTest {
 
     @Test
     void downloadEnvFileTest() {
-        vaultService.addVariable(testService.getName(), testEnvironment.getName(), new Variable(testEnvironment, "FOO", "bar"));
-        vaultService.addVariable(testService.getName(), testEnvironment.getName(), new Variable(testEnvironment, "TEST", "val1"));
+        vaultService.addVariable(testService.getName(), testEnvironment.getName(), variableRequest("FOO", "bar"));
+        vaultService.addVariable(testService.getName(), testEnvironment.getName(), variableRequest("TEST", "val1"));
 
         ResponseEntity<?> response = vaultService.downloadEnvFile(testService.getName(), testEnvironment.getName());
 
@@ -446,5 +467,12 @@ public class VaultServiceTest extends BaseServiceTest {
         ResponseEntity<?> response = vaultService.cicdGet(testService.getName(), testEnvironment.getName());
 
         Assertions.assertEquals(400, response.getStatusCode().value());
+    }
+
+    private VariableRequest variableRequest(String key, String value) {
+        VariableRequest variableRequest = new VariableRequest();
+        variableRequest.setKey(key);
+        variableRequest.setValue(value);
+        return variableRequest;
     }// Integration function end: Auth
 }
