@@ -48,6 +48,23 @@ Default values are provided in `.env` file so the application can run out-of-the
 The provided `.env` is not safe to use past local deployments!
 <br><br>
 
+### Supported `.env` Format
+
+Vaultservice accepts blank lines, full-line comments, and variables in `KEY=value` format.
+Keys must begin with a letter or underscore and may contain only letters, numbers, and underscores.
+
+```env
+SIMPLE=value
+SPACES=  value with spaces
+LITERAL='C:\files\app'
+QUOTED="A \"quoted\" value\nnext line"
+```
+
+Double-quoted values support `\\`, `\"`, `\n`, and `\r`. Single-quoted values are literal.
+Inline comments, `export KEY=value`, physical multiline values, invalid escapes, and duplicate keys are rejected.
+Downloaded and CI/CD `.env` files use canonical double-quoted values.
+<br><br>
+
 ## API Documentation
 A Postman collection is included in the root of the project:
 

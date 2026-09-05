@@ -9,9 +9,11 @@ import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integrati
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserResponse; // Integration line: Auth
 import com.strangequark.vaultservice.utility.AuthUtility;// Integration line: Auth
+import com.strangequark.vaultservice.utility.DotenvUtility;
 import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Auth
 import com.strangequark.vaultservice.utility.TelemetryUtility;// Integration line: Telemetry
 import com.strangequark.vaultservice.variable.Variable;
+import com.strangequark.vaultservice.variable.VariableRequest;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
@@ -30,8 +32,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,6 +46,8 @@ public class VaultService {
     private EnvironmentRepository environmentRepository;
     @Autowired
     private VariableRepository variableRepository;
+    @Autowired
+    private DotenvUtility dotenvUtility;
     // Integration function start: Auth
     @Autowired
     private ServiceUserRepository serviceUserRepository;
@@ -70,7 +72,7 @@ public class VaultService {
 
             if(serviceRepository.findByName(serviceName).isPresent()) {
                 LOGGER.error("Service creation failed - That service name already exists");
-                return ResponseEntity.status(400).body(new ErrorResponse("Service with that name already exists"));
+                return ResponseEntity.status(409).body(new ErrorResponse("Service with that name already exists"));
             }
 
             Service service = new Service();
@@ -114,7 +116,7 @@ public class VaultService {
             //Integration function end: Auth
             if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
                 LOGGER.error("Environment creation failed - An environment with that name already exists in this service");
-                return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists in this service"));
+                return ResponseEntity.status(409).body(new ErrorResponse("Environment with that name already exists in this service"));
             }
 
             Environment environment = new Environment();
@@ -284,7 +286,7 @@ public class VaultService {
     }
 
     @Transactional
-    public ResponseEntity<?> addVariable(String serviceName, String environmentName, Variable variable) {
+    public ResponseEntity<?> addVariable(String serviceName, String environmentName, VariableRequest variableRequest) {
         try {
             LOGGER.info("Attempting to add variable");
 
@@ -298,13 +300,18 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
+            dotenvUtility.validateKeyAndValue(variableRequest.getKey(), variableRequest.getValue());
+
             //Ensure the variable name doesn't already exist
-            if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), variable.getKey()).isPresent()) {
+            if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableRequest.getKey()).isPresent()) {
                 LOGGER.error("Variable with that key already exists in this service/environment");
-                return ResponseEntity.status(400).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
+                return ResponseEntity.status(409).body(new ErrorResponse("Variable with that key already exists in this service/environment"));
             }
 
+            Variable variable = new Variable();
             variable.setEnvironment(environment);
+            variable.setKey(variableRequest.getKey());
+            variable.setValue(variableRequest.getValue());
             variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(variable);
             // Integration function start: Telemetry
@@ -327,7 +334,7 @@ public class VaultService {
     }
 
     @Transactional
-    public ResponseEntity<?> updateVariable(String serviceName, String environmentName, Variable variable) {
+    public ResponseEntity<?> updateVariable(String serviceName, String environmentName, VariableRequest variableRequest) {
         try {
             LOGGER.info("Attempting to update variable");
 
@@ -341,10 +348,12 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            Variable var = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variable.getKey())
+            dotenvUtility.validateKeyAndValue(variableRequest.getKey(), variableRequest.getValue());
+
+            Variable var = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableRequest.getKey())
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
-            var.setValue(variable.getValue());
+            var.setValue(variableRequest.getValue());
             var.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
             variableRepository.save(var);
             // Integration function start: Telemetry
@@ -367,7 +376,7 @@ public class VaultService {
     }
 
     @Transactional
-    public ResponseEntity<?> updateVariables(String serviceName, String environmentName, List<Variable> variables) {
+    public ResponseEntity<?> updateVariables(String serviceName, String environmentName, List<VariableRequest> variables) {
         try {
             LOGGER.info("Attempting to update list of variables");
 
@@ -381,9 +390,12 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
+            for(VariableRequest variable : variables)
+                dotenvUtility.validateKeyAndValue(variable.getKey(), variable.getValue());
+
             List<String> skippedVars = new ArrayList<>();
 
-            for(Variable var : variables) {
+            for(VariableRequest var : variables) {
                 if(variableRepository.findByEnvironmentIdAndKey(environment.getId(), var.getKey()).isEmpty()) {
                     skippedVars.add(var.getKey());
                     continue;
@@ -437,6 +449,8 @@ public class VaultService {
                 return ResponseEntity.status(400).body(new ErrorResponse("File extension is not .env"));
             }
 
+            Map<String, String> importedVariables = dotenvUtility.parse(file.getInputStream());
+
             // Existing keys in decrypted form to skip duplicates
             Set<String> existingKeys = environment.getVariables().stream()
                     .map(var -> {
@@ -451,21 +465,12 @@ public class VaultService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
-            String line;
             int added = 0;
             int skipped = 0;
 
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                // Skip empty lines and comments
-                if (line.isEmpty() || line.startsWith("#")) continue;
-
-                int equalsIndex = line.indexOf('=');
-                if (equalsIndex == -1) continue; // Skip invalid lines
-
-                String key = line.substring(0, equalsIndex).trim();
-                String value = line.substring(equalsIndex + 1).trim();
+            for(Map.Entry<String, String> importedVariable : importedVariables.entrySet()) {
+                String key = importedVariable.getKey();
+                String value = importedVariable.getValue();
 
                 if (existingKeys.contains(key)) {
                     LOGGER.debug("Skipping existing variable");
@@ -479,6 +484,7 @@ public class VaultService {
                 variable.setValue(value);
                 variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
                 variableRepository.save(variable);
+                existingKeys.add(key);
                 added++;
             }
             // Integration function start: Telemetry
@@ -495,6 +501,9 @@ public class VaultService {
 
             LOGGER.info("File processed: " + added + " variables added, " + skipped + " skipped.");
             return ResponseEntity.ok("Variables added: " + added + ", Skipped: " + skipped);
+        } catch (IllegalArgumentException ex) {
+            LOGGER.error("Failed to add env file: " + ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         } catch (Exception ex) {
             LOGGER.error("Failed to add env file: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -521,9 +530,8 @@ public class VaultService {
 
             // Generate .env content
             StringBuilder envContent = new StringBuilder();
-            for (Variable variable : decryptedVariables) {
-                envContent.append(variable.getKey()).append("=").append(variable.getValue()).append("\n");
-            }
+            for(Variable variable : decryptedVariables)
+                envContent.append(dotenvUtility.format(variable.getKey(), variable.getValue()));
 
             byte[] envBytes = envContent.toString().getBytes(StandardCharsets.UTF_8);
             ByteArrayResource resource = new ByteArrayResource(envBytes);
@@ -703,6 +711,8 @@ public class VaultService {
                 return ResponseEntity.status(400).body(new ErrorResponse("File extension is not .env"));
             }
 
+            Map<String, String> importedVariables = dotenvUtility.parse(file.getInputStream());
+
             Service service;
             Optional<Service> optionalService = serviceRepository.findByName(serviceName);
 
@@ -716,7 +726,7 @@ public class VaultService {
 
             if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
                 LOGGER.error("Environment creation failed during bootstrap - That environment name already exists");
-                return ResponseEntity.status(400).body(new ErrorResponse("Environment with that name already exists"));
+                return ResponseEntity.status(409).body(new ErrorResponse("Environment with that name already exists"));
             }
 
             // Create the env
@@ -725,24 +735,11 @@ public class VaultService {
             environment.setService(service);
             environmentRepository.save(environment);
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                // Skip empty lines and comments
-                if (line.isEmpty() || line.startsWith("#")) continue;
-
-                int equalsIndex = line.indexOf('=');
-                if (equalsIndex == -1) continue; // Skip invalid lines
-
-                String key = line.substring(0, equalsIndex).trim();
-                String value = line.substring(equalsIndex + 1).trim();
-
+            for(Map.Entry<String, String> importedVariable : importedVariables.entrySet()) {
                 Variable variable = new Variable();
                 variable.setEnvironment(environment);
-                variable.setKey(key);
-                variable.setValue(value);
+                variable.setKey(importedVariable.getKey());
+                variable.setValue(importedVariable.getValue());
                 variableRepository.save(variable);
             }
             // Integration function start: Telemetry
@@ -756,6 +753,9 @@ public class VaultService {
 
             LOGGER.info("Env file successfully bootstrapped");
             return ResponseEntity.ok("Env file successfully bootstrapped");
+        } catch (IllegalArgumentException ex) {
+            LOGGER.error("Failed to bootstrap env file: " + ex.getMessage());
+            return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         } catch (Exception ex) {
             LOGGER.error("Failed to bootstrap env file: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -911,9 +911,8 @@ public class VaultService {
             UUID userId = UUID.fromString(userIdStr);
 
             // Avoid duplicate users
-            if(serviceUserRepository.findByUserIdAndServiceId(userId, service.getId()).isPresent()) {
-                throw new RuntimeException("User is already part of this service");
-            }
+            if(serviceUserRepository.findByUserIdAndServiceId(userId, service.getId()).isPresent())
+                return ResponseEntity.status(409).body(new ErrorResponse("User is already part of this service"));
 
             service.addUser(new ServiceUser(service, userId, serviceUserRequest.getRole()));
 
@@ -1096,9 +1095,10 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
-            if(serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId()).isPresent()) {
-                throw new RuntimeException("Unable to bootstrap user - user already belongs to service");
-            }
+            if(serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId()).isPresent())
+                return ResponseEntity.status(409).body(
+                        new ErrorResponse("Unable to bootstrap user - user already belongs to service")
+                );
 
             // Add the requesting user to the bootstrapped service as the owner
             service.addUser(new ServiceUser(service, UUID.fromString(jwtUtility.extractId()), ServiceUserRole.OWNER));
@@ -1152,22 +1152,7 @@ public class VaultService {
             String envFile = "";
 
             for(Variable variable : variables) {
-                if(variable.getKey() == null || !variable.getKey().matches("[A-Za-z_][A-Za-z0-9_]*")) {
-                    throw new RuntimeException("Variable key is invalid");
-                }
-
-                if(variable.getValue() == null) {
-                    throw new RuntimeException("Variable value is invalid");
-                }
-
-                String value = variable.getValue()
-                        .replace("\\", "\\\\")
-                        .replace("\"", "\\\"")
-                        .replace("$", "$$")
-                        .replace("\r", "\\r")
-                        .replace("\n", "\\n");
-
-                envFile += variable.getKey() + "=\"" + value + "\"\n";
+                envFile += dotenvUtility.format(variable.getKey(), variable.getValue());
             }
 
             LOGGER.info("CICD get success");

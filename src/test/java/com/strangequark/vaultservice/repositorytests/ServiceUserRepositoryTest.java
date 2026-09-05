@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,14 @@ public class ServiceUserRepositoryTest extends BaseRepositoryTest {
                 .orElseThrow(() -> new AssertionError("User not found"));
 
         Assertions.assertEquals(ServiceUserRole.OWNER, user.getRole());
+    }
+
+    @Test
+    void serviceAndUserIdAreUniqueTest() {
+        Assertions.assertThrows(DataIntegrityViolationException.class,
+                () -> serviceUserRepository.saveAndFlush(
+                        new ServiceUser(testService, testUserId, ServiceUserRole.MANAGER)
+                ));
     }
 
     @Test

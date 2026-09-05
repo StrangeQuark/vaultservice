@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "environments")
+@Table(name = "environments", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"service_id", "name"})
+})
 public class Environment {
 
     public Environment() {

@@ -3,6 +3,7 @@ package com.strangequark.vaultservice.repositorytests;
 import com.strangequark.vaultservice.variable.Variable;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,5 +29,13 @@ public class VariableRepositoryTest extends BaseRepositoryTest {
         Optional<Variable> response  = variableRepository.findByEnvironmentIdAndKey(testEnvironment.getId(), testVariable.getKey());
 
         Assertions.assertTrue(response.isPresent());
+    }
+
+    @Test
+    void environmentAndKeyAreUniqueTest() {
+        Assertions.assertThrows(DataIntegrityViolationException.class,
+                () -> variableRepository.saveAndFlush(
+                        new Variable(testEnvironment, testVariable.getKey(), "duplicateValue")
+                ));
     }
 }

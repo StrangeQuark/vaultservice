@@ -10,7 +10,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "variables")
+@Table(name = "variables", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"environment_id", "var_key"})
+})
 public class Variable {
 
     public Variable() {
@@ -118,4 +120,3 @@ public class Variable {
         this.updatedAt = updatedAt;
     }
 }
-
