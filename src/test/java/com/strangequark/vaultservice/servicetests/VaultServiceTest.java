@@ -2,11 +2,14 @@ package com.strangequark.vaultservice.servicetests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.strangequark.vaultservice.service.Service;
+import com.strangequark.vaultservice.service.ServiceResponse;
+import com.strangequark.vaultservice.environment.EnvironmentResponse;
 import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserResponse; // Integration line: Auth
 import com.strangequark.vaultservice.variable.VariableRequest;
+import com.strangequark.vaultservice.variable.VariableResponse;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
@@ -44,8 +47,11 @@ public class VaultServiceTest extends BaseServiceTest {
     @Test
     void getServiceTest() {
         ResponseEntity<?> response = vaultService.getService(testService.getName());
+        ServiceResponse serviceResponse = (ServiceResponse) response.getBody();
 
         Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals(testService.getName(), serviceResponse.getName());
+        Assertions.assertTrue(serviceResponse.getEnvironments().contains(testEnvironment.getName()));
     }
 
     @Test
@@ -60,8 +66,11 @@ public class VaultServiceTest extends BaseServiceTest {
     @Test
     void getEnvironmentTest() {
         ResponseEntity<?> response = vaultService.getEnvironment(testService.getName(), testEnvironment.getName());
+        EnvironmentResponse environmentResponse = (EnvironmentResponse) response.getBody();
 
         Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals(testEnvironment.getName(), environmentResponse.getName());
+        Assertions.assertEquals(testVariable.getKey(), environmentResponse.getVariables().get(0).getKey());
     }
 
     @Test
@@ -81,8 +90,23 @@ public class VaultServiceTest extends BaseServiceTest {
     @Test
     void getVariableByNameTest() {
         ResponseEntity<?> response = vaultService.getVariableByName(testService.getName(), testEnvironment.getName(), "testKey");
+        VariableResponse variableResponse = (VariableResponse) response.getBody();
 
         Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals(testVariable.getKey(), variableResponse.getKey());
+        Assertions.assertEquals(testVariable.getValue(), variableResponse.getValue());
+    }
+
+    @Test
+    void responseDtosDoNotExposePersistenceFieldsTest() throws Exception {
+        ResponseEntity<?> response = vaultService.getEnvironment(testService.getName(), testEnvironment.getName());
+        String responseJson = new ObjectMapper().writeValueAsString(response.getBody());
+
+        Assertions.assertFalse(responseJson.contains("id"));
+        Assertions.assertFalse(responseJson.contains("environment"));
+        Assertions.assertFalse(responseJson.contains("createdAt"));
+        Assertions.assertFalse(responseJson.contains("updatedAt"));
+        Assertions.assertFalse(responseJson.contains("lastUpdatedBy"));
     }
 
     @Test

@@ -1,8 +1,10 @@
 package com.strangequark.vaultservice.vault;
 
 import com.strangequark.vaultservice.environment.Environment;
+import com.strangequark.vaultservice.environment.EnvironmentResponse;
 import com.strangequark.vaultservice.error.ErrorResponse;
 import com.strangequark.vaultservice.service.Service;
+import com.strangequark.vaultservice.service.ServiceResponse;
 import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
@@ -14,6 +16,7 @@ import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Aut
 import com.strangequark.vaultservice.utility.TelemetryUtility;// Integration line: Telemetry
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRequest;
+import com.strangequark.vaultservice.variable.VariableResponse;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
@@ -134,7 +137,7 @@ public class VaultService {
             ); // Integration function end: Telemetry
 
             LOGGER.info("New environment successfully created");
-            return ResponseEntity.ok(environment);
+            return ResponseEntity.ok(new EnvironmentResponse(environment.getName(), new ArrayList<>()));
         } catch (Exception ex) {
             LOGGER.error("Failed to create environment: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -154,7 +157,12 @@ public class VaultService {
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
                     .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
             //Integration function end: Auth
-            return ResponseEntity.ok(service);
+            List<Environment> environments = environmentRepository.findAllByServiceId(service.getId());
+            List<String> environmentNames = new ArrayList<>();
+            for(Environment environment : environments)
+                environmentNames.add(environment.getName());
+
+            return ResponseEntity.ok(new ServiceResponse(service.getName(), environmentNames));
         } catch (Exception ex) {
             LOGGER.error("Failed to get service: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -204,7 +212,12 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            return ResponseEntity.ok(environment);
+            List<VariableResponse> variables = variableRepository.findByEnvironmentId(environment.getId())
+                    .stream()
+                    .map(VariableResponse::new)
+                    .toList();
+
+            return ResponseEntity.ok(new EnvironmentResponse(environment.getName(), variables));
         } catch (Exception ex) {
             LOGGER.error("Failed to get environment: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -224,7 +237,10 @@ public class VaultService {
             serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
                     .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
             //Integration function end: Auth
-            List<Variable> variables = variableRepository.findByEnvironmentServiceId(service.getId());
+            List<VariableResponse> variables = variableRepository.findByEnvironmentServiceId(service.getId())
+                    .stream()
+                    .map(VariableResponse::new)
+                    .toList();
 
             return ResponseEntity.ok(variables);
         } catch (Exception ex) {
@@ -249,7 +265,10 @@ public class VaultService {
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
-            List<Variable> variables = variableRepository.findByEnvironmentId(environment.getId());
+            List<VariableResponse> variables = variableRepository.findByEnvironmentId(environment.getId())
+                    .stream()
+                    .map(VariableResponse::new)
+                    .toList();
 
             return ResponseEntity.ok(variables);
         } catch (Exception ex) {
@@ -277,7 +296,7 @@ public class VaultService {
             Variable variable = variableRepository.findByEnvironmentIdAndKey(environment.getId(), variableName)
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
-            return ResponseEntity.ok(variable);
+            return ResponseEntity.ok(new VariableResponse(variable));
         } catch (Exception ex) {
             LOGGER.error("Failed to get variable by name: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -325,7 +344,7 @@ public class VaultService {
             ); // Integration function end: Telemetry
 
             LOGGER.info("New variable successfully added");
-            return ResponseEntity.ok(variable);
+            return ResponseEntity.ok(new VariableResponse(variable));
         } catch (Exception ex) {
             LOGGER.error("Failed to add variable: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
@@ -367,7 +386,7 @@ public class VaultService {
             ); // Integration function end: Telemetry
 
             LOGGER.info("Variable successfully updated");
-            return ResponseEntity.ok(var);
+            return ResponseEntity.ok(new VariableResponse(var));
         } catch (Exception ex) {
             LOGGER.error("Failed to update variable: " + ex.getMessage());
             LOGGER.debug("Stack trace: ", ex);
