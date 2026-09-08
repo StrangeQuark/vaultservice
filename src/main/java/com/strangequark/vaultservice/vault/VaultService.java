@@ -58,8 +58,20 @@ public class VaultService {
     JwtUtility jwtUtility;
     @Autowired
     AuthUtility authUtility;
-    @Value("${CICD_TOKEN}")
-    private String CICD_TOKEN;
+    @Value("${AUTH_CICD_TOKEN}")
+    private String AUTH_CICD_TOKEN; // Integration line: Auth
+    @Value("${EMAIL_CICD_TOKEN}")
+    private String EMAIL_CICD_TOKEN; // Integration line: Email
+    @Value("${FILE_CICD_TOKEN}")
+    private String FILE_CICD_TOKEN; // Integration line: File
+    @Value("${GATEWAY_CICD_TOKEN}")
+    private String GATEWAY_CICD_TOKEN; // Integration line: Gateway
+    @Value("${LOGGER_CICD_TOKEN}")
+    private String LOGGER_CICD_TOKEN; // Integration line: Logger
+    @Value("${REACT_CICD_TOKEN}")
+    private String REACT_CICD_TOKEN; // Integration line: React
+    @Value("${TELEMETRY_CICD_TOKEN}")
+    private String TELEMETRY_CICD_TOKEN; // Integration line: Telemetry
     @Value("${BOOTSTRAP_TOKEN:}")
     private String BOOTSTRAP_TOKEN;
     // Integration function end: Auth
@@ -1156,9 +1168,8 @@ public class VaultService {
             HttpServletRequest request = attrs.getRequest();
             String cicdToken = request.getHeader("X-CICD-TOKEN");
 
-            if (cicdToken == null || !cicdToken.equals(CICD_TOKEN)) {
-                throw new RuntimeException("Invalid CICD request token");
-            }
+            if(!validateCicdToken(serviceName, cicdToken))
+                return ResponseEntity.status(403).body(new ErrorResponse("Invalid CICD request token"));
 
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
@@ -1184,5 +1195,27 @@ public class VaultService {
             LOGGER.debug("Stack trace: ", ex);
             return ResponseEntity.status(400).body(new ErrorResponse(ex.getMessage()));
         }
+    }
+
+    private boolean validateCicdToken(String serviceName, String cicdToken) {
+        if(cicdToken == null)
+            return false;
+
+        if(serviceName.equals("authservice"))
+            return cicdToken.equals(AUTH_CICD_TOKEN); // Integration line: Auth
+        if(serviceName.equals("emailservice"))
+            return cicdToken.equals(EMAIL_CICD_TOKEN); // Integration line: Email
+        if(serviceName.equals("fileservice"))
+            return cicdToken.equals(FILE_CICD_TOKEN); // Integration line: File
+        if(serviceName.equals("gatewayservice"))
+            return cicdToken.equals(GATEWAY_CICD_TOKEN); // Integration line: Gateway
+        if(serviceName.equals("loggerservice"))
+            return cicdToken.equals(LOGGER_CICD_TOKEN); // Integration line: Logger
+        if(serviceName.equals("reactservice"))
+            return cicdToken.equals(REACT_CICD_TOKEN); // Integration line: React
+        if(serviceName.equals("telemetryservice"))
+            return cicdToken.equals(TELEMETRY_CICD_TOKEN); // Integration line: Telemetry
+
+        return false;
     }// Integration function end: Auth
 }

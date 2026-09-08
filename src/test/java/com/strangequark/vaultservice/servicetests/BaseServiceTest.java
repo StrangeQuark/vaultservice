@@ -46,8 +46,8 @@ public abstract class BaseServiceTest {
     @Value("${BOOTSTRAP_TOKEN}")
     public String BOOTSTRAP_TOKEN;
     // Integration function start: Auth
-    @Value("${CICD_TOKEN}")
-    public String CICD_TOKEN;
+    @Value("${AUTH_CICD_TOKEN}")
+    public String AUTH_CICD_TOKEN;
     @Autowired
     public ServiceUserRepository serviceUserRepository;
     @MockitoBean

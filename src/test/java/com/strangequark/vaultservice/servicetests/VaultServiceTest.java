@@ -1,6 +1,7 @@
 package com.strangequark.vaultservice.servicetests;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceResponse;
 import com.strangequark.vaultservice.environment.EnvironmentResponse;
@@ -8,6 +9,7 @@ import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line
 import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
 import com.strangequark.vaultservice.serviceuser.ServiceUserResponse; // Integration line: Auth
+import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRequest;
 import com.strangequark.vaultservice.variable.VariableResponse;
 import org.junit.jupiter.api.Assertions;
@@ -476,16 +478,17 @@ public class VaultServiceTest extends BaseServiceTest {
 
     @Test
     void cicdGetTest() {
+        Environment cicdEnvironment = setupCicdEnvironment();
+        Variable cicdVariable = new Variable(cicdEnvironment, "testKey", "value=$test\"line\nnext");
+        variableRepository.save(cicdVariable);
+
         MockHttpServletRequest mockRequest = new MockHttpServletRequest();
-        mockRequest.addHeader("X-CICD-TOKEN", CICD_TOKEN);
+        mockRequest.addHeader("X-CICD-TOKEN", AUTH_CICD_TOKEN);
 
         ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
         RequestContextHolder.setRequestAttributes(attrs);
 
-        testVariable.setValue("value=$test\"line\nnext");
-        variableRepository.save(testVariable);
-
-        ResponseEntity<?> response = vaultService.cicdGet(testService.getName(), testEnvironment.getName());
+        ResponseEntity<?> response = vaultService.cicdGet("authservice", cicdEnvironment.getName());
 
         Assertions.assertEquals(200, response.getStatusCode().value());
         Assertions.assertEquals("testKey=\"value=$test\\\"line\\nnext\"\n", response.getBody());
@@ -493,18 +496,40 @@ public class VaultServiceTest extends BaseServiceTest {
 
     @Test
     void cicdGetInvalidVariableTest() {
+        Environment cicdEnvironment = setupCicdEnvironment();
+        Variable cicdVariable = new Variable(cicdEnvironment, "TEST=KEY", "testValue");
+        variableRepository.save(cicdVariable);
+
         MockHttpServletRequest mockRequest = new MockHttpServletRequest();
-        mockRequest.addHeader("X-CICD-TOKEN", CICD_TOKEN);
+        mockRequest.addHeader("X-CICD-TOKEN", AUTH_CICD_TOKEN);
 
         ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
         RequestContextHolder.setRequestAttributes(attrs);
 
-        testVariable.setKey("TEST=KEY");
-        variableRepository.save(testVariable);
-
-        ResponseEntity<?> response = vaultService.cicdGet(testService.getName(), testEnvironment.getName());
+        ResponseEntity<?> response = vaultService.cicdGet("authservice", cicdEnvironment.getName());
 
         Assertions.assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void cicdGetWrongServiceTokenTest() {
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("X-CICD-TOKEN", AUTH_CICD_TOKEN);
+
+        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
+        RequestContextHolder.setRequestAttributes(attrs);
+
+        ResponseEntity<?> response = vaultService.cicdGet("emailservice", testEnvironment.getName());
+
+        Assertions.assertEquals(403, response.getStatusCode().value());
+    }
+
+    private Environment setupCicdEnvironment() {
+        Service cicdService = new Service("authservice");
+        serviceRepository.save(cicdService);
+
+        Environment cicdEnvironment = new Environment(cicdService, "cicdEnvironment");
+        return environmentRepository.save(cicdEnvironment);
     }
 
     private VariableRequest variableRequest(String key, String value) {
