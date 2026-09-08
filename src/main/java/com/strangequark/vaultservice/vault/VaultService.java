@@ -1029,17 +1029,9 @@ public class VaultService {
 
             List<Map<String, String>> errors = new ArrayList<>();
             List<Service> servicesToDelete = new ArrayList<>();
+            boolean authService = jwtUtility.isAuthService();
 
             for(Service service : services) {
-                ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                        .orElseGet(() -> {
-                            errors.add(Map.of(service.getName(), "Requesting user does not have access to this service"));
-                            return null;
-                        });
-
-                if(requestingUser == null)
-                    continue;
-
                 ServiceUser targetUser = serviceUserRepository.findByUserIdAndServiceId(userId, service.getId())
                         .orElseGet(() -> {
                             errors.add(Map.of(service.getName(), "Target user is not part of this service"));
@@ -1049,10 +1041,21 @@ public class VaultService {
                 if(targetUser == null)
                     continue;
 
+                if(!authService) {
+                    ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                            .orElseGet(() -> {
+                                errors.add(Map.of(service.getName(), "Requesting user does not have access to this service"));
+                                return null;
+                            });
+
+                    if(requestingUser == null)
+                        continue;
+
                 // Check if the requesting user is either attempting to remove self or is an OWNER
-                if(!requestingUser.getUserId().equals(targetUser.getUserId()) && requestingUser.getRole() != ServiceUserRole.OWNER) {
-                    errors.add(Map.of(service.getName(), "Only OWNER users can remove others"));
-                    continue;
+                    if(!requestingUser.getUserId().equals(targetUser.getUserId()) && requestingUser.getRole() != ServiceUserRole.OWNER) {
+                        errors.add(Map.of(service.getName(), "Only OWNER users can remove others"));
+                        continue;
+                    }
                 }
 
                 // If the target user has an OWNER role, we must ensure that we're not removing the last OWNER from the service

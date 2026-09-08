@@ -411,6 +411,20 @@ public class VaultServiceTest extends BaseServiceTest {
     }
 
     @Test
+    void authServiceCanDeleteUserFromAllServicesTest() {
+        serviceUserRepository.save(new ServiceUser(testService, testUserId, ServiceUserRole.MAINTAINER));
+        when(jwtUtility.isAuthService()).thenReturn(true);
+
+        ServiceUserRequest serviceUserRequest = new ServiceUserRequest();
+        serviceUserRequest.setUsername("testUser");
+
+        ResponseEntity<?> response = vaultService.deleteUserFromAllServices(serviceUserRequest);
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertTrue(serviceUserRepository.findByUserIdAndServiceId(testUserId, testService.getId()).isEmpty());
+    }
+
+    @Test
     void deleteUserFromAllServicesDoesNotPartiallyDeleteTest() {
         Service protectedService = new Service("protectedService_" + UUID.randomUUID());
         serviceRepository.save(protectedService);
