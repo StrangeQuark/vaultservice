@@ -38,6 +38,13 @@ public class JwtUtility {
         return claims.get("principalId", String.class);
     }
 
+    public boolean isAuthService() {
+        Claims claims = getClaims(getTokenFromHeader());
+
+        return claims.get("principalType", String.class).equals("SERVICE_ACCOUNT") &&
+                claims.get("clientId", String.class).equals("auth");
+    }
+
     private String getTokenFromHeader() {
         LOGGER.debug("Attempting to get token from header");
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
