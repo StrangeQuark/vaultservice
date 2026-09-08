@@ -35,7 +35,13 @@ services:
       - SPRING_JPA_DATABASE=${SPRING_JPA_DATABASE}
       - SPRING_JPA_DATABASE_PLATFORM=${SPRING_JPA_DATABASE_PLATFORM}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-      - CICD_TOKEN=${CICD_TOKEN} # Integration line: Auth
+      - AUTH_CICD_TOKEN=${AUTH_CICD_TOKEN} # Integration line: Auth
+      - EMAIL_CICD_TOKEN=${EMAIL_CICD_TOKEN} # Integration line: Email
+      - FILE_CICD_TOKEN=${FILE_CICD_TOKEN} # Integration line: File
+      - GATEWAY_CICD_TOKEN=${GATEWAY_CICD_TOKEN} # Integration line: Gateway
+      - LOGGER_CICD_TOKEN=${LOGGER_CICD_TOKEN} # Integration line: Logger
+      - REACT_CICD_TOKEN=${REACT_CICD_TOKEN} # Integration line: React
+      - TELEMETRY_CICD_TOKEN=${TELEMETRY_CICD_TOKEN} # Integration line: Telemetry
       - BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN}
       - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY} # Integration line: Auth
       - JWT_ISSUER=${JWT_ISSUER} # Integration line: Auth
