@@ -4,11 +4,11 @@ import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceRepository;
-import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
-import com.strangequark.vaultservice.utility.AuthUtility;// Integration line: Auth
-import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUser;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRole;
+import com.strangequark.vaultservice.utility.AuthUtility;
+import com.strangequark.vaultservice.utility.JwtUtility;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRepository;
 import com.strangequark.vaultservice.vault.VaultService;
@@ -16,12 +16,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;// Integration line: Auth
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;// Integration line: Auth
-import java.util.UUID;// Integration line: Auth
-import static org.mockito.Mockito.when;// Integration line: Auth
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import java.util.UUID;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -45,7 +45,7 @@ public abstract class BaseServiceTest {
     public Variable testVariable;
     @Value("${BOOTSTRAP_TOKEN}")
     public String BOOTSTRAP_TOKEN;
-    // Integration function start: Auth
+
     @Value("${AUTH_CICD_TOKEN}")
     public String AUTH_CICD_TOKEN;
     @Autowired
@@ -58,7 +58,7 @@ public abstract class BaseServiceTest {
     public UUID testUserId = UUID.randomUUID();
     public ServiceUser serviceUser;
     public String testBootstrapService = "testBootstrapService";
-    // Integration function end: Auth
+
 
     @BeforeEach
     void setup() {
@@ -70,13 +70,13 @@ public abstract class BaseServiceTest {
             serviceRepository.save(testService);
             environmentRepository.save(testEnvironment);
             variableRepository.save(testVariable);
-            // Integration function start: Auth
+
             serviceUser = new ServiceUser(testService, testOwnerId, ServiceUserRole.OWNER);
             serviceUserRepository.save(serviceUser);
 
             // Mock authUtility functions
             when(jwtUtility.extractId()).thenReturn(testOwnerId.toString());
-            when(authUtility.getUserId("testUser")).thenReturn(testUserId.toString());// Integration function end: Auth
+            when(authUtility.getUserId("testUser")).thenReturn(testUserId.toString());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

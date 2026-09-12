@@ -49,7 +49,7 @@ public class Variable {
     @Column(name = "updated_at")
     @Convert(converter = LocalDateTimeEncryptDecryptConverter.class)
     private LocalDateTime updatedAt;
-    // Integration function start: Auth
+
     @Column(name = "last_updated_by")
     private UUID lastUpdatedBy;
 
@@ -59,7 +59,7 @@ public class Variable {
 
     public void setLastUpdatedBy(UUID lastUpdatedBy) {
         this.lastUpdatedBy = lastUpdatedBy;
-    }// Integration function end: Auth
+    }
 
     @PrePersist
     protected void onCreate() {

@@ -5,10 +5,10 @@ import com.strangequark.vaultservice.environment.Environment;
 import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceResponse;
 import com.strangequark.vaultservice.environment.EnvironmentResponse;
-import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserResponse; // Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUser;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRole;
+import com.strangequark.vaultservice.serviceuser.ServiceUserResponse;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRequest;
 import com.strangequark.vaultservice.variable.VariableResponse;
@@ -16,18 +16,18 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;// Integration line: Auth
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.context.request.RequestContextHolder;// Integration line: Auth
-import org.springframework.web.context.request.ServletRequestAttributes;// Integration line: Auth
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays; // Integration line: Auth
+import java.util.Arrays;
 import java.util.List;
-import java.util.UUID; // Integration line: Auth
+import java.util.UUID;
 
-import static org.mockito.Mockito.when; // Integration line: Auth
+import static org.mockito.Mockito.when;
 
 public class VaultServiceTest extends BaseServiceTest {
     @Test
@@ -292,7 +292,7 @@ public class VaultServiceTest extends BaseServiceTest {
 
         Assertions.assertEquals(200, response.getStatusCode().value());
     }
-    // Integration function start: Auth
+
     @Test
     void getAllServicesTest() {
         ResponseEntity<?> response = vaultService.getAllServices();
@@ -537,5 +537,5 @@ public class VaultServiceTest extends BaseServiceTest {
         variableRequest.setKey(key);
         variableRequest.setValue(value);
         return variableRequest;
-    }// Integration function end: Auth
+    }
 }

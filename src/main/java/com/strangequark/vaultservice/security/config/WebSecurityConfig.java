@@ -1,6 +1,6 @@
 package com.strangequark.vaultservice.security.config;
 
-import org.springframework.beans.factory.annotation.Autowired; // Integration line: Auth
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Integration line: Auth
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -21,29 +21,39 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebSecurityConfig {
     @Value("${cors.allowed-origins}")
     private String[] allowedOrigins;
-    @Autowired // Integration line: Auth
-    private JwtAuthenticationFilter jwtAuthenticationFilter; // Integration line: Auth
+    @Value("${authservice.integration}")
+    private boolean authserviceIntegration;
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(
-                                "/api/vault/health",
-                                "/api/vault/bootstrap/add-env/**",
-                                "/api/vault/cicd/**"
-                        ).permitAll()
-                        .requestMatchers("/api/**").hasAuthority("VAULT_API_ACCESS") // Integration line: Auth
-                        .anyRequest().permitAll()
-                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 );
-        httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Integration line: Auth
+
+        if(authserviceIntegration) {
+            httpSecurity.authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .requestMatchers(
+                            "/api/vault/health",
+                            "/api/vault/bootstrap/add-env/**",
+                            "/api/vault/cicd/**"
+                    ).permitAll()
+                    .requestMatchers("/api/**").hasAuthority("VAULT_API_ACCESS")
+                    .anyRequest().permitAll()
+            );
+            httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        } else {
+            httpSecurity.authorizeHttpRequests(auth -> auth
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                    .anyRequest().permitAll()
+            );
+        }
 
         return httpSecurity.build();
     }

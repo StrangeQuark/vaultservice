@@ -5,21 +5,22 @@ import com.strangequark.vaultservice.environment.EnvironmentResponse;
 import com.strangequark.vaultservice.error.ErrorResponse;
 import com.strangequark.vaultservice.service.Service;
 import com.strangequark.vaultservice.service.ServiceResponse;
-import com.strangequark.vaultservice.serviceuser.ServiceUser;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserRole;// Integration line: Auth
-import com.strangequark.vaultservice.serviceuser.ServiceUserResponse; // Integration line: Auth
-import com.strangequark.vaultservice.utility.AuthUtility;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUser;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRepository;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;
+import com.strangequark.vaultservice.serviceuser.ServiceUserRole;
+import com.strangequark.vaultservice.serviceuser.ServiceUserResponse;
+import com.strangequark.vaultservice.utility.AuthUtility;
 import com.strangequark.vaultservice.utility.DotenvUtility;
-import com.strangequark.vaultservice.utility.JwtUtility;// Integration line: Auth
-import com.strangequark.vaultservice.utility.TelemetryUtility;// Integration line: Telemetry
+import com.strangequark.vaultservice.utility.JwtUtility;
+import com.strangequark.vaultservice.utility.TelemetryUtility;
 import com.strangequark.vaultservice.variable.Variable;
 import com.strangequark.vaultservice.variable.VariableRequest;
 import com.strangequark.vaultservice.variable.VariableResponse;
 import com.strangequark.vaultservice.environment.EnvironmentRepository;
 import com.strangequark.vaultservice.service.ServiceRepository;
 import com.strangequark.vaultservice.variable.VariableRepository;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,11 @@ public class VaultService {
     private VariableRepository variableRepository;
     @Autowired
     private DotenvUtility dotenvUtility;
-    // Integration function start: Auth
+    @Value("${authservice.integration}")
+    private boolean authserviceIntegration;
+    @Value("${telemetryservice.integration}")
+    private boolean telemetryserviceIntegration;
+
     @Autowired
     private ServiceUserRepository serviceUserRepository;
     @Autowired
@@ -59,26 +64,71 @@ public class VaultService {
     @Autowired
     AuthUtility authUtility;
     @Value("${AUTH_CICD_TOKEN}")
-    private String AUTH_CICD_TOKEN; // Integration line: Auth
+    private String AUTH_CICD_TOKEN;
     @Value("${EMAIL_CICD_TOKEN}")
-    private String EMAIL_CICD_TOKEN; // Integration line: Email
+    private String EMAIL_CICD_TOKEN;
     @Value("${FILE_CICD_TOKEN}")
-    private String FILE_CICD_TOKEN; // Integration line: File
+    private String FILE_CICD_TOKEN;
     @Value("${GATEWAY_CICD_TOKEN}")
-    private String GATEWAY_CICD_TOKEN; // Integration line: Gateway
+    private String GATEWAY_CICD_TOKEN;
     @Value("${LOGGER_CICD_TOKEN}")
-    private String LOGGER_CICD_TOKEN; // Integration line: Logger
+    private String LOGGER_CICD_TOKEN;
     @Value("${REACT_CICD_TOKEN}")
-    private String REACT_CICD_TOKEN; // Integration line: React
+    private String REACT_CICD_TOKEN;
     @Value("${TELEMETRY_CICD_TOKEN}")
-    private String TELEMETRY_CICD_TOKEN; // Integration line: Telemetry
+    private String TELEMETRY_CICD_TOKEN;
     @Value("${BOOTSTRAP_TOKEN:}")
     private String BOOTSTRAP_TOKEN;
-    // Integration function end: Auth
-    // Integration function start: Telemetry
+
+
     @Autowired
     TelemetryUtility telemetryUtility;
-    // Integration function end: Telemetry
+
+    @PostConstruct
+    private void initializeServiceUsers() {
+        if(!authserviceIntegration)
+            return;
+
+        String superUserId = authUtility.getSuperUserId();
+        if(superUserId == null)
+            return;
+
+        for(Service service : serviceUserRepository.findServicesWithoutUsers()) {
+            service.addUser(new ServiceUser(service, UUID.fromString(superUserId), ServiceUserRole.OWNER));
+            serviceRepository.save(service);
+        }
+    }
+
+    private ServiceUser getRequestingUser(Service service) {
+        if(!authserviceIntegration)
+            return new ServiceUser(service, null, ServiceUserRole.OWNER);
+
+        return serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
+                .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+    }
+
+    private String getUserId() {
+        if(!authserviceIntegration)
+            return "";
+
+        return jwtUtility.extractId();
+    }
+
+    private void sendTelemetryEvent(String eventType, Map<String, Object> metadata) {
+        if(!telemetryserviceIntegration)
+            return;
+
+        Map<String, Object> telemetryMetadata = new HashMap<>(metadata);
+        if(!authserviceIntegration)
+            telemetryMetadata.remove("userId");
+
+        telemetryUtility.sendTelemetryEvent(eventType, telemetryMetadata);
+    }
+
+    private ResponseEntity<?> authServiceNotEnabled() {
+        return ResponseEntity.status(404).body(new ErrorResponse("Auth service integration is not enabled"));
+    }
+
 
     @Transactional
     public ResponseEntity<?> createService(String serviceName) {
@@ -92,16 +142,17 @@ public class VaultService {
 
             Service service = new Service();
             service.setName(serviceName);
-            service.addUser(new ServiceUser(service, UUID.fromString(jwtUtility.extractId()), ServiceUserRole.OWNER));// Integration line: Auth
+            if(authserviceIntegration)
+                service.addUser(new ServiceUser(service, UUID.fromString(getUserId()), ServiceUserRole.OWNER));
 
             serviceRepository.save(service);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-create-service", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-create-service", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("New service successfully created");
             return ResponseEntity.ok("New service successfully created");
@@ -120,15 +171,14 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+
+            ServiceUser requestingUser = getRequestingUser(service);
 
             // Ensure that the request user has the OWNER or MAINTAINER role
             if ((requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER)) {
                 throw new RuntimeException("Only service users with OWNER or MANAGER roles can create environments");
             }
-            //Integration function end: Auth
+
             if(environmentRepository.findByNameAndServiceId(environmentName, service.getId()).isPresent()) {
                 LOGGER.error("Environment creation failed - An environment with that name already exists in this service");
                 return ResponseEntity.status(409).body(new ErrorResponse("Environment with that name already exists in this service"));
@@ -138,15 +188,15 @@ public class VaultService {
             environment.setName(environmentName);
             environment.setService(service);
             environmentRepository.save(environment);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-create-environment", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-create-environment", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("New environment successfully created");
             return ResponseEntity.ok(new EnvironmentResponse(environment.getName(), new ArrayList<>()));
@@ -165,10 +215,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            getRequestingUser(service);
+
             List<Environment> environments = environmentRepository.findAllByServiceId(service.getId());
             List<String> environmentNames = new ArrayList<>();
             for(Environment environment : environments)
@@ -190,10 +239,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            getRequestingUser(service);
+
             List<Environment> environments = environmentRepository.findAllByServiceId(service.getId());
 
             List<String> environmentNames = new ArrayList<>();
@@ -217,10 +265,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -245,10 +292,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            getRequestingUser(service);
+
             List<VariableResponse> variables = variableRepository.findByEnvironmentServiceId(service.getId())
                     .stream()
                     .map(VariableResponse::new)
@@ -270,10 +316,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -298,10 +343,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -324,10 +368,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            ServiceUser requestingUser = getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -343,17 +386,17 @@ public class VaultService {
             variable.setEnvironment(environment);
             variable.setKey(variableRequest.getKey());
             variable.setValue(variableRequest.getValue());
-            variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
+            variable.setLastUpdatedBy(requestingUser.getUserId());
             variableRepository.save(variable);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-add-variable", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-add-variable", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("New variable successfully added");
             return ResponseEntity.ok(new VariableResponse(variable));
@@ -372,10 +415,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            ServiceUser requestingUser = getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -385,17 +427,17 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
             var.setValue(variableRequest.getValue());
-            var.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
+            var.setLastUpdatedBy(requestingUser.getUserId());
             variableRepository.save(var);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-update-variable", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-update-variable", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("Variable successfully updated");
             return ResponseEntity.ok(new VariableResponse(var));
@@ -414,10 +456,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            ServiceUser requestingUser = getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -435,12 +476,12 @@ public class VaultService {
                 Variable v = variableRepository.findByEnvironmentIdAndKey(environment.getId(), var.getKey()).get();
 
                 v.setValue(var.getValue());
-                v.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
+                v.setLastUpdatedBy(requestingUser.getUserId());
                 variableRepository.save(v);
             }
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-update-variables", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-update-variables", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -448,7 +489,7 @@ public class VaultService {
                             "updated-count", variables.size(),
                             "skipped-count", skippedVars.size()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("Variables successfully updated");
             return skippedVars.isEmpty() ? ResponseEntity.ok("All variables updated successfully") : ResponseEntity.ok("Skipped variables: " + skippedVars);
@@ -467,10 +508,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            ServiceUser requestingUser = getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -513,14 +553,14 @@ public class VaultService {
                 variable.setEnvironment(environment);
                 variable.setKey(key);
                 variable.setValue(value);
-                variable.setLastUpdatedBy(requestingUser.getUserId());// Integration line: Auth
+                variable.setLastUpdatedBy(requestingUser.getUserId());
                 variableRepository.save(variable);
                 existingKeys.add(key);
                 added++;
             }
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-add-env-file", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-add-env-file", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
@@ -528,7 +568,7 @@ public class VaultService {
                             "added-count", added,
                             "skipped-count", skipped
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("File processed: " + added + " variables added, " + skipped + " skipped.");
             return ResponseEntity.ok("Variables added: " + added + ", Skipped: " + skipped);
@@ -550,10 +590,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -568,15 +607,15 @@ public class VaultService {
             ByteArrayResource resource = new ByteArrayResource(envBytes);
 
             String filename = serviceName + "-" + environmentName + ".env";
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-download-env-file", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-download-env-file", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("Env file successfully downloaded");
             return ResponseEntity.ok()
@@ -599,10 +638,9 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
-            //Integration function end: Auth
+
+            getRequestingUser(service);
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
@@ -610,15 +648,15 @@ public class VaultService {
                     .orElseThrow(() -> new RuntimeException("Variable not found"));
 
             variableRepository.deleteById(variable.getId());
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-variable", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-delete-variable", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("Variable successfully deleted");
             return ResponseEntity.ok("Variable successfully deleted");
@@ -637,28 +675,27 @@ public class VaultService {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+
+            ServiceUser requestingUser = getRequestingUser(service);
 
             // Ensure that the request user has the OWNER or MANAGER role
             if (requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER) {
                 throw new RuntimeException("Only service users with OWNER or MANAGER roles can delete environments");
             }
-            //Integration function end: Auth
+
             Environment environment = environmentRepository.findByNameAndServiceId(environmentName, service.getId())
                     .orElseThrow(() -> new RuntimeException("Environment not found"));
 
             environmentRepository.delete(environment);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-environment", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-delete-environment", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("Environment successfully deleted");
             return ResponseEntity.ok("Environment successfully deleted");
@@ -677,23 +714,22 @@ public class VaultService {
             Service service = serviceRepository.findByNameForUpdate(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            //Integration function start: Auth
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+
+            ServiceUser requestingUser = getRequestingUser(service);
 
             // Ensure that the request user has the OWNER role
             if (requestingUser.getRole() != ServiceUserRole.OWNER) {
                 throw new RuntimeException("Only service users with OWNER role can delete services");
             }
-            //Integration function end: Auth
+
             serviceRepository.delete(service);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-service", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-delete-service", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("Service successfully deleted");
             return ResponseEntity.ok("Service successfully deleted");
@@ -707,11 +743,12 @@ public class VaultService {
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAllServices() {
-        LOGGER.debug("Attempting to get all services for user");
+            LOGGER.debug("Attempting to get all services for user");
 
         try {
             List<Service> services = serviceRepository.findAll();
-            services = serviceUserRepository.findServicesByUserId(UUID.fromString(jwtUtility.extractId())); // Integration line: Auth
+            if(authserviceIntegration)
+                services = serviceUserRepository.findServicesByUserId(UUID.fromString(getUserId()));
 
             List<String> serviceNames = new ArrayList<>();
             for(Service service : services)
@@ -773,14 +810,14 @@ public class VaultService {
                 variable.setValue(importedVariable.getValue());
                 variableRepository.save(variable);
             }
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-bootstrap-env-file", Map.of(
+
+            sendTelemetryEvent("vault-bootstrap-env-file", Map.of(
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "environment-id", environment.getId(),
                             "environment-name", environment.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("Env file successfully bootstrapped");
             return ResponseEntity.ok("Env file successfully bootstrapped");
@@ -793,17 +830,19 @@ public class VaultService {
             return ResponseEntity.status(500).body(new ErrorResponse(ex.getMessage()));
         }
     }
-    // Integration function start: Auth
+
     @Transactional(readOnly = true)
     public ResponseEntity<?> getUsersByService(String serviceName) {
+        if(!authserviceIntegration)
+            return authServiceNotEnabled();
+
         LOGGER.debug("Attempting to get all users for service");
 
         try {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service not found"));
 
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            ServiceUser requestingUser = getRequestingUser(service);
 
             if(requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER)
                 throw new RuntimeException("Only service users with OWNER or MANAGER roles can view service users");
@@ -824,6 +863,9 @@ public class VaultService {
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getAllRoles() {
+        if(!authserviceIntegration)
+            return authServiceNotEnabled();
+
         LOGGER.debug("Attempting to get all roles");
 
         return ResponseEntity.ok(ServiceUserRole.values());
@@ -831,14 +873,16 @@ public class VaultService {
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getCurrentUserRole(String serviceName) {
+        if(!authserviceIntegration)
+            return authServiceNotEnabled();
+
         LOGGER.debug("Attempting to get current user's role");
 
         try {
             Service service = serviceRepository.findByName(serviceName)
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            ServiceUser requestingUser = getRequestingUser(service);
 
             LOGGER.debug("Successfully retrieved current user's role");
             return ResponseEntity.ok(requestingUser.getRole());
@@ -851,14 +895,16 @@ public class VaultService {
 
     @Transactional
     public ResponseEntity<?> updateUserRole(ServiceUserRequest serviceUserRequest) {
+        if(!authserviceIntegration)
+            return authServiceNotEnabled();
+
         LOGGER.info("Attempting to update user's role");
 
         try {
             Service service = serviceRepository.findByNameForUpdate(serviceUserRequest.getServiceName())
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            ServiceUser requestingUser = getRequestingUser(service);
 
             // Ensure that the request user has the OWNER or MANAGER role
             if (requestingUser.getRole() != ServiceUserRole.OWNER && requestingUser.getRole() != ServiceUserRole.MANAGER) {
@@ -899,14 +945,14 @@ public class VaultService {
             //Update the target user's role
             targetUser.setRole(serviceUserRequest.getRole());
             serviceUserRepository.save(targetUser);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-update-user-role", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-update-user-role", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName(),
                             "role", serviceUserRequest.getRole().name()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("User role successfully updated");
             return ResponseEntity.ok("User role successfully updated");
@@ -920,14 +966,16 @@ public class VaultService {
 
     @Transactional
     public ResponseEntity<?> addUserToService(ServiceUserRequest serviceUserRequest) {
+        if(!authserviceIntegration)
+            return authServiceNotEnabled();
+
         LOGGER.info("Attempting to add user to service");
 
         try {
             Service service = serviceRepository.findByNameForUpdate(serviceUserRequest.getServiceName())
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            ServiceUser requestingUser = getRequestingUser(service);
 
             // Ensure that the request user has the OWNER role
             if (requestingUser.getRole() != ServiceUserRole.OWNER) {
@@ -948,13 +996,13 @@ public class VaultService {
             service.addUser(new ServiceUser(service, userId, serviceUserRequest.getRole()));
 
             serviceRepository.save(service);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-add-user-to-service", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-add-user-to-service", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("User successfully added to service");
             return ResponseEntity.ok("User successfully added to service");
@@ -968,14 +1016,16 @@ public class VaultService {
 
     @Transactional
     public ResponseEntity<?> deleteUserFromService(ServiceUserRequest serviceUserRequest) {
+        if(!authserviceIntegration)
+            return authServiceNotEnabled();
+
         LOGGER.info("Attempting to delete user from service");
 
         try {
             Service service = serviceRepository.findByNameForUpdate(serviceUserRequest.getServiceName())
                     .orElseThrow(() -> new RuntimeException("Service with this name does not exist"));
 
-            ServiceUser requestingUser = serviceUserRepository.findByUserIdAndServiceId(UUID.fromString(jwtUtility.extractId()), service.getId())
-                    .orElseThrow(() -> new RuntimeException("Requesting user does not have access to this service"));
+            ServiceUser requestingUser = getRequestingUser(service);
 
             // Ensure the target user exists
             String userIdStr = authUtility.getUserId(serviceUserRequest.getUsername());
@@ -1008,13 +1058,13 @@ public class VaultService {
             if(deletedCount == 0)
                 throw new RuntimeException("User was not successfully deleted from service");
 
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-user-from-service", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-delete-user-from-service", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
             LOGGER.info("User successfully deleted from service");
             return ResponseEntity.ok("User successfully deleted from service");
         } catch(RuntimeException ex) {
@@ -1027,6 +1077,9 @@ public class VaultService {
 
     @Transactional
     public ResponseEntity<?> deleteUserFromAllServices(ServiceUserRequest serviceUserRequest) {
+        if(!authserviceIntegration)
+            return authServiceNotEnabled();
+
         LOGGER.info("Attempting to delete user from all services");
 
         try {
@@ -1099,12 +1152,12 @@ public class VaultService {
                 if(!servicesToDelete.contains(service))
                     serviceUserRepository.deleteServiceUser(userId, service.getId());
             }
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-delete-user-from-all-services", Map.of(
-                            "userId", jwtUtility.extractId(), // Integration line: Auth
+
+            sendTelemetryEvent("vault-delete-user-from-all-services", Map.of(
+                            "userId", getUserId(),
                             "services-count", services.size()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("User successfully deleted from all services");
             return ResponseEntity.ok("User successfully deleted from all services");
@@ -1118,6 +1171,9 @@ public class VaultService {
 
     @Transactional
     public ResponseEntity<?> bootstrapUser(String serviceName, String bootstrapToken) {
+        if(!authserviceIntegration)
+            return authServiceNotEnabled();
+
         LOGGER.info("Attempting to bootstrap user to service");
 
         try {
@@ -1138,13 +1194,13 @@ public class VaultService {
             service.addUser(new ServiceUser(service, UUID.fromString(jwtUtility.extractId()), ServiceUserRole.OWNER));
 
             serviceRepository.save(service);
-            // Integration function start: Telemetry
-            telemetryUtility.sendTelemetryEvent("vault-bootstrap-user-to-service", Map.of(
-                            "userId", jwtUtility.extractId(),
+
+            sendTelemetryEvent("vault-bootstrap-user-to-service", Map.of(
+                            "userId", getUserId(),
                             "service-id", service.getId(),
                             "service-name", service.getName()
                     )
-            ); // Integration function end: Telemetry
+            );
 
             LOGGER.info("User successfully bootstrapped to service");
             return ResponseEntity.ok("User successfully bootstrapped to service");
@@ -1202,20 +1258,20 @@ public class VaultService {
             return false;
 
         if(serviceName.equals("authservice"))
-            return cicdToken.equals(AUTH_CICD_TOKEN); // Integration line: Auth
+            return cicdToken.equals(AUTH_CICD_TOKEN);
         if(serviceName.equals("emailservice"))
-            return cicdToken.equals(EMAIL_CICD_TOKEN); // Integration line: Email
+            return cicdToken.equals(EMAIL_CICD_TOKEN);
         if(serviceName.equals("fileservice"))
-            return cicdToken.equals(FILE_CICD_TOKEN); // Integration line: File
+            return cicdToken.equals(FILE_CICD_TOKEN);
         if(serviceName.equals("gatewayservice"))
-            return cicdToken.equals(GATEWAY_CICD_TOKEN); // Integration line: Gateway
+            return cicdToken.equals(GATEWAY_CICD_TOKEN);
         if(serviceName.equals("loggerservice"))
-            return cicdToken.equals(LOGGER_CICD_TOKEN); // Integration line: Logger
+            return cicdToken.equals(LOGGER_CICD_TOKEN);
         if(serviceName.equals("reactservice"))
-            return cicdToken.equals(REACT_CICD_TOKEN); // Integration line: React
+            return cicdToken.equals(REACT_CICD_TOKEN);
         if(serviceName.equals("telemetryservice"))
-            return cicdToken.equals(TELEMETRY_CICD_TOKEN); // Integration line: Telemetry
+            return cicdToken.equals(TELEMETRY_CICD_TOKEN);
 
         return false;
-    }// Integration function end: Auth
+    }
 }
