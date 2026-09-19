@@ -1,4 +1,4 @@
-// Integration file: Auth
+
 
 package com.strangequark.vaultservice.repositorytests;
 

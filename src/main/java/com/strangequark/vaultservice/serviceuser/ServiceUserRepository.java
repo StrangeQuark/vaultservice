@@ -1,4 +1,4 @@
-// Integration file: Auth
+
 
 package com.strangequark.vaultservice.serviceuser;
 
@@ -16,6 +16,9 @@ import java.util.UUID;
 
 public interface ServiceUserRepository extends JpaRepository<ServiceUser, UUID> {
     Optional<ServiceUser> findByUserIdAndServiceId(UUID userId, UUID serviceId);
+
+    @Query("SELECT s FROM Service s WHERE NOT EXISTS (SELECT su FROM ServiceUser su WHERE su.service = s)")
+    List<Service> findServicesWithoutUsers();
 
     @Query("SELECT su.service FROM ServiceUser su WHERE su.userId = :userId")
     List<Service> findServicesByUserId(UUID userId);

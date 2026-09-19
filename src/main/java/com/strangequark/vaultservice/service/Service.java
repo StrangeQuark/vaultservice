@@ -3,12 +3,12 @@ package com.strangequark.vaultservice.service;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.strangequark.vaultservice.environment.Environment;
 
-import com.strangequark.vaultservice.serviceuser.ServiceUser; // Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUser;
 import com.strangequark.vaultservice.utility.LocalDateTimeEncryptDecryptConverter;
 import com.strangequark.vaultservice.utility.StringEncryptDecryptConverter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList; // Integration line: Auth
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,7 +17,7 @@ import java.util.UUID;
 public class Service {
 
     public Service() {
-        this.serviceUsers = new ArrayList<>();// Integration line: Auth
+        this.serviceUsers = new ArrayList<>();
     }
 
     public Service(String name) {
@@ -48,10 +48,10 @@ public class Service {
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Environment> environments;
-    // Integration function start: Auth
+
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
-    private List<ServiceUser> serviceUsers;// Integration function end: Auth
+    private List<ServiceUser> serviceUsers;
 
     @PrePersist
     protected void onCreate() {
@@ -103,7 +103,7 @@ public class Service {
     public void setEnvironments(List<Environment> environments) {
         this.environments = environments;
     }
-    // Integration function start: Auth
+
     public List<ServiceUser> getServiceUsers() {
         return serviceUsers;
     }
@@ -114,5 +114,5 @@ public class Service {
 
     public void addUser(ServiceUser serviceUser) {
         this.serviceUsers.add(serviceUser);
-    }// Integration function end: Auth
+    }
 }

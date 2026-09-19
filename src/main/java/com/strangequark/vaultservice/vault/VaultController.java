@@ -1,6 +1,6 @@
 package com.strangequark.vaultservice.vault;
 
-import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;// Integration line: Auth
+import com.strangequark.vaultservice.serviceuser.ServiceUserRequest;
 import com.strangequark.vaultservice.variable.Variable;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,7 +113,7 @@ public class VaultController {
             @RequestParam("file") MultipartFile file) {
         return vaultService.bootstrapEnvFile(serviceName, environmentName, file, bootstrapToken);
     }
-    // Integration function start: Auth
+
     @PostMapping("/get-users-by-service")
     public ResponseEntity<?> getUsersByService(@RequestBody VaultRequest vaultRequest) {
         return vaultService.getUsersByService(vaultRequest.getServiceName());
@@ -159,5 +159,5 @@ public class VaultController {
     @PostMapping("/cicd")
     public ResponseEntity<?> cicdGet(@RequestBody VaultRequest vaultRequest) {
         return vaultService.cicdGet(vaultRequest.getServiceName(), vaultRequest.getEnvironmentName());
-    }// Integration function end: Auth
+    }
 }

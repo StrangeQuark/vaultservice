@@ -1,4 +1,4 @@
-// Integration file: Auth
+
 
 package com.strangequark.vaultservice.utility;
 
@@ -72,7 +72,7 @@ public class JwtUtility {
         throw new RuntimeException("Missing or invalid Authorization header and access_token cookie");
     }
 
-    // Integration function start: Telemetry
+
     public boolean isTokenValid(String token) {
         try {
             getClaims(token);
@@ -81,7 +81,7 @@ public class JwtUtility {
             return false;
         }
     }
-    // Integration function end: Telemetry
+
 
     private Claims getClaims(String token) {
         try {

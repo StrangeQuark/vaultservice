@@ -1,6 +1,10 @@
 pipeline {
     agent { label 'linux-agent' }
 
+    environment {
+        KUBERNETES_CICD_TOKEN = credentials('KUBERNETES_CICD_TOKEN')
+    }
+
     stages {
         // Because the vault service cannot request secrets from itself upon start up without extensive initialization
         // need from the user, it is required to establish these credentials in Jenkins before start up
@@ -26,6 +30,32 @@ pipeline {
         stage("Deploy & Health Check") {
             steps {
                 script {
+                    def kubernetesEnabled = env.KUBERNETES_ENABLED == "true"
+
+                    if(kubernetesEnabled) {
+                        def imageRepository = env.SERVICE_IMAGE_REPOSITORY
+                        def kubernetesServiceUrl = env.KUBERNETESERVICE_URL
+
+                        if(imageRepository.isEmpty() || kubernetesServiceUrl.isEmpty())
+                            error("VaultService Kubernetes deployment configuration is incomplete")
+
+                        def image = imageRepository + ":" + env.BUILD_NUMBER
+
+                        withEnv(["SERVICE_IMAGE=" + image, "KUBERNETESERVICE_URL=" + kubernetesServiceUrl]) {
+                            sh "docker build -t " + image + " ."
+                            sh "docker push " + image
+                            sh '''
+                                curl --fail-with-body -X POST \\
+                                    -H "X-CICD-TOKEN: $KUBERNETES_CICD_TOKEN" \\
+                                    -F "serviceName=vaultservice" \\
+                                    -F "image=$SERVICE_IMAGE" \\
+                                    -F "environmentFile=@vaultservice.env" \\
+                                    "$KUBERNETESERVICE_URL/api/kubernetes/deploy"
+                            '''
+                        }
+                        return
+                    }
+
                     try {
                         sh "docker compose --env-file vaultservice.env up --build -d"
 //                         bat "docker compose --env-file vaultservice.env up --build -d" // For windows runs

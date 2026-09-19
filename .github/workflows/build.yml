@@ -7,6 +7,12 @@ jobs:
   deploy:
     runs-on: [self-hosted, linux-server]
 
+    env:
+      KUBERNETES_CICD_TOKEN: ${{ secrets.KUBERNETES_CICD_TOKEN }}
+      KUBERNETES_ENABLED: ${{ vars.KUBERNETES_ENABLED }}
+      SERVICE_IMAGE_REPOSITORY: ${{ vars.SERVICE_IMAGE_REPOSITORY }}
+      KUBERNETESERVICE_URL: ${{ vars.KUBERNETESERVICE_URL }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -20,6 +26,18 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           set -e
+
+          if [ "$KUBERNETES_ENABLED" = "true" ]; then
+            [ -n "$SERVICE_IMAGE_REPOSITORY" ] && [ -n "$KUBERNETESERVICE_URL" ] || exit 1
+            SERVICE_IMAGE="$SERVICE_IMAGE_REPOSITORY:$GITHUB_SHA"
+            docker build -t "$SERVICE_IMAGE" .
+            docker push "$SERVICE_IMAGE"
+            curl --fail-with-body -X POST -H "X-CICD-TOKEN: $KUBERNETES_CICD_TOKEN" \
+              -F "serviceName=vaultservice" -F "image=$SERVICE_IMAGE" \
+              -F "environmentFile=@vaultservice.env" "$KUBERNETESERVICE_URL/api/kubernetes/deploy"
+            exit 0
+          fi
+
           docker compose --env-file vaultservice.env up --build -d
 
           max_retries=40
