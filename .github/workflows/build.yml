@@ -23,6 +23,9 @@ jobs:
           printf "%s\n" "${{ secrets.VAULT_ENV_FILE }}" > vaultservice.env
           echo "vaultservice.env copied."
 
+      - name: Run tests
+        run: ./mvnw clean test
+
       - name: Deploy with Docker Compose
         run: |
           set -e
