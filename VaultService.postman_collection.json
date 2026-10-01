@@ -743,10 +743,15 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\"\n}",
+					"options": { "raw": { "language": "json" } }
+				},
 				"url": {
-					"raw": "http://localhost:6020/api/vault/get-users-by-service/testService",
+					"raw": "http://localhost:6020/api/vault/get-users-by-service",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -755,8 +760,7 @@
 					"path": [
 						"api",
 						"vault",
-						"get-users-by-service",
-						"testService"
+						"get-users-by-service"
 					]
 				}
 			},
@@ -806,10 +810,15 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceName\": \"testService\"\n}",
+					"options": { "raw": { "language": "json" } }
+				},
 				"url": {
-					"raw": "http://localhost:6020/api/vault/get-current-user-role/testService",
+					"raw": "http://localhost:6020/api/vault/get-current-user-role",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -818,8 +827,7 @@
 					"path": [
 						"api",
 						"vault",
-						"get-current-user-role",
-						"testService"
+						"get-current-user-role"
 					]
 				}
 			},
