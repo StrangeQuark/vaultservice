@@ -17,6 +17,8 @@ services:
     labels:
       com.msinit.log: "true"
       com.msinit.service-name: "vaultservice"
+    logging:
+      driver: json-file
     depends_on:
       - vault-db
     environment:

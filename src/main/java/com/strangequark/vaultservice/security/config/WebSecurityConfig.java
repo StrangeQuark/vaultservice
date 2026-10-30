@@ -68,6 +68,7 @@ public class WebSecurityConfig {
                 registry.addMapping("/**")
                         .allowedOrigins(allowedOrigins)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .exposedHeaders("X-Trace-ID")
                         .allowCredentials(true);
             }
         };
