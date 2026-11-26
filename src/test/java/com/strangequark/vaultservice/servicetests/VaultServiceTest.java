@@ -524,6 +524,54 @@ public class VaultServiceTest extends BaseServiceTest {
         Assertions.assertEquals(403, response.getStatusCode().value());
     }
 
+    @Test
+    void cicdGetVpnServiceTest() {
+        Service cicdService = new Service("vpnservice");
+        serviceRepository.save(cicdService);
+
+        Environment cicdEnvironment = new Environment(cicdService, "cicdEnvironment");
+        environmentRepository.save(cicdEnvironment);
+        Variable cicdVariable = new Variable(cicdEnvironment, "testKey", "testValue");
+        variableRepository.save(cicdVariable);
+
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("X-CICD-TOKEN", VPN_CICD_TOKEN);
+
+        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
+        RequestContextHolder.setRequestAttributes(attrs);
+
+        ResponseEntity<?> response = vaultService.cicdGet("vpnservice", cicdEnvironment.getName());
+
+        Assertions.assertEquals(200, response.getStatusCode().value());
+        Assertions.assertEquals("testKey=\"testValue\"\n", response.getBody());
+    }
+
+    @Test
+    void cicdGetVpnServiceWithWrongTokenTest() {
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("X-CICD-TOKEN", AUTH_CICD_TOKEN);
+
+        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
+        RequestContextHolder.setRequestAttributes(attrs);
+
+        ResponseEntity<?> response = vaultService.cicdGet("vpnservice", testEnvironment.getName());
+
+        Assertions.assertEquals(403, response.getStatusCode().value());
+    }
+
+    @Test
+    void cicdGetOtherServiceWithVpnTokenTest() {
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("X-CICD-TOKEN", VPN_CICD_TOKEN);
+
+        ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
+        RequestContextHolder.setRequestAttributes(attrs);
+
+        ResponseEntity<?> response = vaultService.cicdGet("authservice", testEnvironment.getName());
+
+        Assertions.assertEquals(403, response.getStatusCode().value());
+    }
+
     private Environment setupCicdEnvironment() {
         Service cicdService = new Service("authservice");
         serviceRepository.save(cicdService);
