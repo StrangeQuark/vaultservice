@@ -77,6 +77,8 @@ public class VaultService {
     private String REACT_CICD_TOKEN;
     @Value("${TELEMETRY_CICD_TOKEN}")
     private String TELEMETRY_CICD_TOKEN;
+    @Value("${VPN_CICD_TOKEN}")
+    private String VPN_CICD_TOKEN;
     @Value("${BOOTSTRAP_TOKEN:}")
     private String BOOTSTRAP_TOKEN;
 
@@ -1271,6 +1273,8 @@ public class VaultService {
             return cicdToken.equals(REACT_CICD_TOKEN);
         if(serviceName.equals("telemetryservice"))
             return cicdToken.equals(TELEMETRY_CICD_TOKEN);
+        if(serviceName.equals("vpnservice"))
+            return cicdToken.equals(VPN_CICD_TOKEN);
 
         return false;
     }
