@@ -50,6 +50,8 @@ public abstract class BaseServiceTest {
     public String AUTH_CICD_TOKEN;
     @Value("${VPN_CICD_TOKEN}")
     public String VPN_CICD_TOKEN;
+    @Value("${TEST_CICD_TOKEN}")
+    public String TEST_CICD_TOKEN;
     @Autowired
     public ServiceUserRepository serviceUserRepository;
     @MockitoBean
